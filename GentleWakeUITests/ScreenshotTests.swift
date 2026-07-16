@@ -48,22 +48,22 @@ final class ScreenshotTests: XCTestCase {
         sleepBriefly()
         snap(app, "03-profile")
 
-        app.buttons["Morning brief"].tap()
+        app.buttons["Morning brief"].firstMatch.tap()
         sleepBriefly()
         snap(app, "17-morning-brief-settings")
         app.navigationBars.buttons.firstMatch.tap() // back
         sleepBriefly()
 
-        app.buttons["FAQ & Feedback"].tap()
+        app.buttons["FAQ & Feedback"].firstMatch.tap()
         sleepBriefly()
         // Expand the first FAQ entry so the answer style gets captured.
-        app.buttons["Why wake up gradually?"].tap()
+        app.buttons["Why wake up gradually?"].firstMatch.tap()
         sleepBriefly()
         snap(app, "18-faq")
         app.navigationBars.buttons.firstMatch.tap()
         sleepBriefly()
 
-        app.buttons["Smart light sunrise"].tap()
+        app.buttons["Smart light sunrise"].firstMatch.tap()
         sleepBriefly()
         snap(app, "19-sunrise-settings")
 

@@ -122,7 +122,6 @@ struct ProfileView: View {
             )
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
     }

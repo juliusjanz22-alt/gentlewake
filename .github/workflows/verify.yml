@@ -66,13 +66,17 @@ jobs:
 
       - name: Build and run screenshot tests
         run: |
-          set -o pipefail
-          xcodebuild test \
+          if xcodebuild test \
             -project GentleWake.xcodeproj \
             -scheme GentleWake \
             -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -resultBundlePath TestResults.xcresult \
-            | tail -100
+            > xcodebuild.log 2>&1; then
+            tail -60 xcodebuild.log
+          else
+            tail -500 xcodebuild.log
+            exit 1
+          fi
 
       - name: Extract screenshots
         if: always()
@@ -94,4 +98,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.size }}
-          path: TestResults.xcresult
+          path: |
+            TestResults.xcresult
+            xcodebuild.log

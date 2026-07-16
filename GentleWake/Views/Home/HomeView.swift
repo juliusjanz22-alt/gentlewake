@@ -138,7 +138,6 @@ struct HomeView: View {
             .font(.subheadline)
             .glassPill()
         }
-        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Sleep duration: \(settings.sleepDurationMinutes.asSpokenDuration)")
         .accessibilityHint("Shows your next sleep details")
     }
