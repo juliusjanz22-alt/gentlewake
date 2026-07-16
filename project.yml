@@ -16,6 +16,12 @@ targets:
     platform: iOS
     sources:
       - GentleWake
+    dependencies:
+      - target: GentleWakeWidgets
+        embed: true
+    settings:
+      base:
+        CODE_SIGN_ENTITLEMENTS: GentleWake/GentleWake.entitlements
     info:
       path: GentleWake/Info.plist
       properties:
@@ -27,6 +33,25 @@ targets:
         # the device is locked during the sleep window — the same approach
         # the source app's 3-tier architecture implies.
         UIBackgroundModes: [audio]
+        NSSupportsLiveActivities: true
+        NSHealthShareUsageDescription: Reads your sleep data to refine the sleep gate and show your real sleep trend.
+        NSHealthUpdateUsageDescription: Saves nights recorded by the app to Apple Health.
+        NSHomeKitUsageDescription: Controls your bedroom lights for the smart light sunrise during the alarm fade-in.
+  GentleWakeWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - GentleWakeWidgets
+      - GentleWake/Shared
+    info:
+      path: GentleWakeWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: GentleWake Widgets
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        SKIP_INSTALL: YES
   GentleWakeUITests:
     type: bundle.ui-testing
     platform: iOS

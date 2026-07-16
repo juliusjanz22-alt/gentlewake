@@ -28,6 +28,7 @@ final class AlarmCoordinator {
 
     let clock: AppClock
     private let synth = ToneSynth()
+    private let liveActivity = LiveActivityController()
     private var timer: Timer?
     private var settingsProvider: (() -> AlarmSettings?)?
     /// Set when the user ends sleep mode manually; suppresses re-entry until
@@ -87,6 +88,10 @@ final class AlarmCoordinator {
     /// Called with (settings, wakeDate) when the user dismisses the alarm;
     /// the host inserts a SleepSession so tracking works offline.
     var recordSession: ((AlarmSettings, Date) -> Void)?
+
+    /// Called with fade progress (0–1) each tick while fading; the host
+    /// drives the HomeKit sunrise from it when enabled.
+    var sunriseUpdate: ((Double) -> Void)?
 
     /// User confirmed they're awake on the ringing screen. Hands off to the
     /// morning brief if any of its panels are enabled.
@@ -182,9 +187,31 @@ final class AlarmCoordinator {
             let level = settings.startVolume
                 + (settings.endVolume - settings.startVolume) * curve.volume(at: fadeProgress)
             synth.volume = Float(level)
+            if settings.sunriseEnabled {
+                sunriseUpdate?(fadeProgress)
+            }
         }
 
         setPhase(target, settings: settings)
+
+        if phase != .idle && phase != .brief {
+            liveActivity.update(
+                phaseName: phaseName(phase),
+                progress: fadeProgress,
+                wakeTimeText: settings.wakeMinutes.asClockTime
+            )
+        }
+    }
+
+    private func phaseName(_ phase: Phase) -> String {
+        switch phase {
+        case .idle: "idle"
+        case .sleeping: "sleeping"
+        case .fading: "fading"
+        case .ringing: "ringing"
+        case .nudging: "nudging"
+        case .brief: "brief"
+        }
     }
 
     private func setPhase(_ newPhase: Phase, settings: AlarmSettings) {
@@ -192,9 +219,20 @@ final class AlarmCoordinator {
         let oldPhase = phase
         phase = newPhase
 
+        // begin() self-guards against double-starts; calling it on every
+        // active phase covers windows entered mid-flight (app opened during
+        // the fade, not at bedtime).
+        if newPhase != .idle && newPhase != .brief {
+            liveActivity.begin(
+                bedtimeText: settings.bedtimeMinutes.asClockTime,
+                wakeTimeText: settings.wakeMinutes.asClockTime
+            )
+        }
+
         switch newPhase {
         case .idle, .brief:
             stopAllAudio()
+            liveActivity.end()
         case .sleeping:
             // Near-silent keepalive holds the audio session (and the app)
             // alive through the locked sleep window.

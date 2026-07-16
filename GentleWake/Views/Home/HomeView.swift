@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(AlarmCoordinator.self) private var coordinator
+    @Environment(HomeStore.self) private var homeStore
     @Query private var storedSettings: [AlarmSettings]
     @State private var activeSheet: Sheet?
 
@@ -28,12 +29,24 @@ struct HomeView: View {
                 try? context.fetch(FetchDescriptor<AlarmSettings>()).first
             }
             coordinator.recordSession = { settings, wakeDate in
-                context.insert(SleepSession(
+                let session = SleepSession(
                     date: wakeDate,
                     bedtimeMinutes: settings.bedtimeMinutes,
                     wakeMinutes: settings.wakeMinutes,
                     durationMinutes: settings.sleepDurationMinutes
-                ))
+                )
+                context.insert(session)
+                if HealthStore.shared.isConnected {
+                    Task { await HealthStore.shared.contribute(session: session) }
+                }
+            }
+            let homeStore = self.homeStore
+            coordinator.sunriseUpdate = { progress in
+                guard let settings = try? context.fetch(FetchDescriptor<AlarmSettings>()).first,
+                      settings.sunriseEnabled else { return }
+                homeStore.connect()
+                let ids = Set(settings.sunriseAccessoryIDs.split(separator: ",").map(String.init))
+                homeStore.applySunrise(progress: progress, accessoryIDs: ids)
             }
         }
         .fullScreenCover(isPresented: Binding(
@@ -230,6 +243,12 @@ struct HomeView: View {
                     wakeMinutes: settings.wakeMinutes,
                     debugLeadSeconds: 12
                 )
+            }
+        case "healthSeed":
+            settings.isEnabled = false
+            Task {
+                await HealthStore.shared.requestAuthorization()
+                await HealthStore.shared.seedSampleNights()
             }
         default:
             break

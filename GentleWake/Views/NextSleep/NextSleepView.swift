@@ -13,7 +13,8 @@ struct NextSleepView: View {
     @Bindable var settings: AlarmSettings
     @Query(sort: \SleepSession.date, order: .reverse) private var sessions: [SleepSession]
     @Environment(\.dismiss) private var dismiss
-    @State private var showsHealthNote = false
+    @State private var healthUnavailable = false
+    @State private var healthNights: [(date: Date, minutes: Int)] = []
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -46,6 +47,11 @@ struct NextSleepView: View {
         }
         .background(Theme.sheetBackground.ignoresSafeArea())
         .preferredColorScheme(.dark)
+        .task {
+            if HealthStore.shared.isConnected {
+                healthNights = await HealthStore.shared.recentNights()
+            }
+        }
     }
 
     // MARK: - Derived values
@@ -245,7 +251,7 @@ struct NextSleepView: View {
                     .font(.headline)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Text("\(min(sessions.count, 5))/5 nights analyzed")
+                Text("\(min(max(sessions.count, healthNights.count), 5))/5 nights analyzed")
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.textSecondary)
@@ -303,7 +309,7 @@ struct NextSleepView: View {
             .frame(height: 150)
             .padding(.top, 10)
             .overlay {
-                if sessions.isEmpty {
+                if !hasRealData {
                     Text("Sample data")
                         .font(.footnote.weight(.semibold))
                         .foregroundStyle(Theme.textSecondary)
@@ -313,9 +319,9 @@ struct NextSleepView: View {
                 }
             }
             .accessibilityLabel(
-                sessions.isEmpty
-                    ? "Sleep duration trend chart showing sample data"
-                    : "Sleep duration trend chart for your last \(min(sessions.count, 7)) nights"
+                hasRealData
+                    ? "Sleep duration trend chart for your last \(trendData.count) nights"
+                    : "Sleep duration trend chart showing sample data"
             )
         }
         .padding(16)
@@ -326,17 +332,28 @@ struct NextSleepView: View {
         )
     }
 
+    private var hasRealData: Bool {
+        !sessions.isEmpty || !healthNights.isEmpty
+    }
+
     private var trendData: [(label: String, hours: Double)] {
-        if sessions.isEmpty {
-            // Deterministic sample, mirroring the reference's pre-data state.
-            let sample = [6.8, 7.5, 8.0, 7.2, 6.5, 7.9, 8.1]
-            return sample.enumerated().map { ("N\($0.offset + 1)", $0.element) }
-        }
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
-        return sessions.prefix(7).reversed().map {
-            (formatter.string(from: $0.date), Double($0.durationMinutes) / 60)
+
+        // Health samples win (richer source); recorded sessions next;
+        // deterministic sample data mirrors the reference's pre-data state.
+        if !healthNights.isEmpty {
+            return healthNights.prefix(7).reversed().map {
+                (formatter.string(from: $0.date), Double($0.minutes) / 60)
+            }
         }
+        if !sessions.isEmpty {
+            return sessions.prefix(7).reversed().map {
+                (formatter.string(from: $0.date), Double($0.durationMinutes) / 60)
+            }
+        }
+        let sample = [6.8, 7.5, 8.0, 7.2, 6.5, 7.9, 8.1]
+        return sample.enumerated().map { ("N\($0.offset + 1)", $0.element) }
     }
 
     // MARK: - Shared bits
@@ -366,9 +383,16 @@ struct NextSleepView: View {
     private var enableDataButton: some View {
         VStack(alignment: .leading, spacing: 6) {
             Button {
-                showsHealthNote = true
+                Task {
+                    guard HealthStore.shared.isAvailable else {
+                        healthUnavailable = true
+                        return
+                    }
+                    await HealthStore.shared.requestAuthorization()
+                    healthNights = await HealthStore.shared.recentNights()
+                }
             } label: {
-                Text("Enable data")
+                Text(HealthStore.shared.isConnected ? "Refresh data" : "Enable data")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.horizontal, 22)
@@ -376,10 +400,10 @@ struct NextSleepView: View {
                     .background(Theme.accent.opacity(0.35), in: Capsule())
                     .overlay(Capsule().strokeBorder(Theme.accent, lineWidth: 1))
             }
-            .accessibilityHint("Connects Health and motion data")
+            .accessibilityHint("Connects Apple Health sleep data")
 
-            if showsHealthNote {
-                Text("Health & motion integration arrives in the integrations phase.")
+            if healthUnavailable {
+                Text("Apple Health isn't available on this device.")
                     .font(.caption2)
                     .foregroundStyle(Theme.warning)
             }
