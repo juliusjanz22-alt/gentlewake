@@ -16,12 +16,17 @@ targets:
     platform: iOS
     sources:
       - GentleWake
-    settings:
-      base:
-        INFOPLIST_KEY_CFBundleDisplayName: GentleWake
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_UIUserInterfaceStyle: Dark
-        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+    info:
+      path: GentleWake/Info.plist
+      properties:
+        CFBundleDisplayName: GentleWake
+        UILaunchScreen: {}
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        # Keeps the audio session (and thus the fade-in engine) alive while
+        # the device is locked during the sleep window — the same approach
+        # the source app's 3-tier architecture implies.
+        UIBackgroundModes: [audio]
   GentleWakeUITests:
     type: bundle.ui-testing
     platform: iOS

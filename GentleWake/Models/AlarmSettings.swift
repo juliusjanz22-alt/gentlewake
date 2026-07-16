@@ -12,6 +12,7 @@ final class AlarmSettings {
 
     // Fade-in (Phase 2+)
     var fadeInMinutes: Int
+    var fadeCurve: String
     var startVolume: Double
     var endVolume: Double
     var nudgeEnabled: Bool
@@ -25,6 +26,7 @@ final class AlarmSettings {
         wakeMinutes: Int = 7 * 60,
         isEnabled: Bool = false,
         fadeInMinutes: Int = 15,
+        fadeCurve: String = FadeCurve.gentle.rawValue,
         startVolume: Double = 0.0,
         endVolume: Double = 0.8,
         nudgeEnabled: Bool = true,
@@ -35,6 +37,7 @@ final class AlarmSettings {
         self.wakeMinutes = wakeMinutes
         self.isEnabled = isEnabled
         self.fadeInMinutes = fadeInMinutes
+        self.fadeCurve = fadeCurve
         self.startVolume = startVolume
         self.endVolume = endVolume
         self.nudgeEnabled = nudgeEnabled

@@ -287,33 +287,6 @@ struct AlarmOptionsView: View {
     }
 }
 
-/// Fade curve identities. Raw values persist in AlarmSettings.fadeCurve.
-enum FadeCurve: String, CaseIterable, Identifiable {
-    case gentle
-    case balanced
-    case steep
-
-    var id: String { rawValue }
-
-    var label: String {
-        switch self {
-        case .gentle: "Gentle"
-        case .balanced: "Balanced"
-        case .steep: "Steep"
-        }
-    }
-
-    /// Maps elapsed fraction (0–1) to volume fraction (0–1); used by the
-    /// Phase 3 audio engine and the mini preview shape.
-    func volume(at t: Double) -> Double {
-        switch self {
-        case .gentle: t * t
-        case .balanced: t
-        case .steep: 1 - (1 - t) * (1 - t)
-        }
-    }
-}
-
 /// Mini preview of a fade curve for the selector pills.
 struct FadeCurveShape: Shape {
     let curve: FadeCurve
