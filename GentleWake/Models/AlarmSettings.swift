@@ -21,6 +21,11 @@ final class AlarmSettings {
     var soundID: String
     var randomSoundMode: Bool
 
+    // Morning brief (Phase 5+). Defaults keep older stores migratable.
+    var briefCalendar: Bool = true
+    var briefWeather: Bool = true
+    var briefReminders: Bool = true
+
     init(
         bedtimeMinutes: Int = 23 * 60,
         wakeMinutes: Int = 7 * 60,

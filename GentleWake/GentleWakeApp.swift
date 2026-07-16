@@ -12,6 +12,6 @@ struct GentleWakeApp: App {
                 .preferredColorScheme(.dark)
                 .tint(Theme.accentBright)
         }
-        .modelContainer(for: AlarmSettings.self)
+        .modelContainer(for: [AlarmSettings.self, SleepSession.self])
     }
 }

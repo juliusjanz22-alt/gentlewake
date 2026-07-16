@@ -18,6 +18,8 @@ final class AlarmCoordinator {
         case fading
         case ringing
         case nudging
+        /// Post-dismiss morning brief; exits via finishBrief().
+        case brief
     }
 
     private(set) var phase: Phase = .idle
@@ -82,12 +84,35 @@ final class AlarmCoordinator {
         Task { await NotificationBackup.cancel() }
     }
 
-    /// User confirmed they're awake on the ringing screen.
+    /// Called with (settings, wakeDate) when the user dismisses the alarm;
+    /// the host inserts a SleepSession so tracking works offline.
+    var recordSession: ((AlarmSettings, Date) -> Void)?
+
+    /// User confirmed they're awake on the ringing screen. Hands off to the
+    /// morning brief if any of its panels are enabled.
     func dismissAlarm() {
+        let settings = settingsProvider.flatMap { $0() }
+        if let settings {
+            recordSession?(settings, clock.now)
+        }
         stopAllAudio()
+        Task { await NotificationBackup.cancel() }
+
+        let wantsBrief = settings.map {
+            $0.briefCalendar || $0.briefWeather || $0.briefReminders
+        } ?? false
+        if wantsBrief {
+            phase = .brief
+        } else {
+            sleepUIDismissed = true
+            phase = .idle
+        }
+    }
+
+    /// Leaves the morning brief and returns home.
+    func finishBrief() {
         sleepUIDismissed = true
         phase = .idle
-        Task { await NotificationBackup.cancel() }
     }
 
     /// User left sleep mode early (alarm stays armed).
@@ -107,6 +132,11 @@ final class AlarmCoordinator {
                 stopAllAudio()
                 phase = .idle
             }
+            return
+        }
+
+        // The brief isn't time-driven; it stays up until the user leaves it.
+        if phase == .brief {
             return
         }
 
@@ -163,7 +193,7 @@ final class AlarmCoordinator {
         phase = newPhase
 
         switch newPhase {
-        case .idle:
+        case .idle, .brief:
             stopAllAudio()
         case .sleeping:
             // Near-silent keepalive holds the audio session (and the app)

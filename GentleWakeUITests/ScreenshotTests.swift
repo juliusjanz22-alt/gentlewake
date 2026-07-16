@@ -46,7 +46,20 @@ final class ScreenshotTests: XCTestCase {
         waitForHome(app)
         app.buttons["Profile"].tap()
         sleepBriefly()
-        snap(app, "03-profile-stub")
+        snap(app, "03-profile")
+
+        app.buttons["Morning brief"].tap()
+        sleepBriefly()
+        snap(app, "17-morning-brief-settings")
+        app.navigationBars.buttons.firstMatch.tap() // back
+        sleepBriefly()
+
+        app.buttons["FAQ & Feedback"].tap()
+        sleepBriefly()
+        // Expand the first FAQ entry so the answer style gets captured.
+        app.buttons["Why wake up gradually?"].tap()
+        sleepBriefly()
+        snap(app, "18-faq")
     }
 
     @MainActor
@@ -59,7 +72,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(pill.waitForExistence(timeout: 5))
         pill.tap()
         sleepBriefly()
-        snap(app, "04-next-sleep-stub")
+        snap(app, "04-next-sleep")
     }
 
     @MainActor
@@ -144,10 +157,17 @@ final class ScreenshotTests: XCTestCase {
 
         app.buttons["I'm awake"].tap()
         XCTAssertTrue(
-            app.buttons["Alarm"].waitForExistence(timeout: 10),
-            "Dismissing the alarm did not return home"
+            app.staticTexts["Good morning!"].waitForExistence(timeout: 10),
+            "Morning brief never appeared after dismissing the alarm"
         )
-        snap(app, "14-home-after-dismiss")
+        snap(app, "14-morning-brief")
+
+        app.buttons["Start the day"].tap()
+        XCTAssertTrue(
+            app.buttons["Alarm"].waitForExistence(timeout: 10),
+            "Leaving the morning brief did not return home"
+        )
+        snap(app, "15-home-after-dismiss")
     }
 
     /// Tier 3: backup notifications actually deliver. Schedules the chain on
@@ -173,7 +193,7 @@ final class ScreenshotTests: XCTestCase {
             "Backup notification banner never arrived"
         )
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        shot.name = "15-backup-notification-banner"
+        shot.name = "16-backup-notification-banner"
         shot.lifetime = .keepAlways
         add(shot)
     }

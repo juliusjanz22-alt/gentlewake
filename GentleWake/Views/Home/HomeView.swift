@@ -27,6 +27,14 @@ struct HomeView: View {
             coordinator.attach {
                 try? context.fetch(FetchDescriptor<AlarmSettings>()).first
             }
+            coordinator.recordSession = { settings, wakeDate in
+                context.insert(SleepSession(
+                    date: wakeDate,
+                    bedtimeMinutes: settings.bedtimeMinutes,
+                    wakeMinutes: settings.wakeMinutes,
+                    durationMinutes: settings.sleepDurationMinutes
+                ))
+            }
         }
         .fullScreenCover(isPresented: Binding(
             get: { coordinator.showsSleepUI },
@@ -36,6 +44,8 @@ struct HomeView: View {
                 switch coordinator.phase {
                 case .ringing, .nudging:
                     RingingView(settings: settings)
+                case .brief:
+                    MorningBriefView(settings: settings)
                 default:
                     SleepModeView(settings: settings)
                 }
@@ -44,9 +54,13 @@ struct HomeView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .profile:
-                PlaceholderSheet(title: "Profile", phase: "Phase 5")
+                if let settings = storedSettings.first {
+                    ProfileView(settings: settings)
+                }
             case .nextSleep:
-                PlaceholderSheet(title: "Your next sleep", phase: "Phase 4")
+                if let settings = storedSettings.first {
+                    NextSleepView(settings: settings)
+                }
             case .alarmOptions:
                 if let settings = storedSettings.first {
                     AlarmOptionsView(settings: settings)
@@ -197,6 +211,9 @@ struct HomeView: View {
             settings.nudgeEnabled = true
             settings.soundID = "cabin-day"
             settings.randomSoundMode = false
+            // Wipe recorded nights so trend/consistency screenshots are
+            // deterministic regardless of which live tests ran before.
+            try? modelContext.delete(model: SleepSession.self)
         case "sleepCycle":
             settings.bedtimeMinutes = 23 * 60
             settings.wakeMinutes = 23 * 60 + 10

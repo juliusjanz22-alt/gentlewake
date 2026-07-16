@@ -1,45 +1,72 @@
 import SwiftUI
 import SwiftData
 
-/// Alarm configuration sheet: sound selection, fade-in duration and curve,
+/// Alarm configuration sheet wrapper (used from the home dial's center
+/// button). The content itself lives in AlarmOptionsContent so ProfileView
+/// can push it inside its own navigation stack.
+struct AlarmOptionsView: View {
+    @Bindable var settings: AlarmSettings
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                AlarmOptionsContent(settings: settings)
+                closeButton
+            }
+            .background(Theme.sheetBackground)
+            .toolbarBackground(Theme.sheetBackground, for: .navigationBar)
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private var closeButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Text("Close")
+                .font(.headline)
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, 44)
+                .padding(.vertical, 15)
+                .background(.ultraThinMaterial, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
+        }
+        .padding(.bottom, 12)
+        .accessibilityLabel("Close alarm settings")
+    }
+}
+
+/// Alarm configuration: sound selection, fade-in duration and curve,
 /// start/end volume, and the nudge fail-safe.
 ///
 /// INFERRED LAYOUT: the reference material describes these controls (PDF §3,
 /// review quotes) but never shows this screen. Composed from the source's
 /// card/pill design language.
-struct AlarmOptionsView: View {
+struct AlarmOptionsContent: View {
     @Bindable var settings: AlarmSettings
-    @Environment(\.dismiss) private var dismiss
 
     private static let fadeDurations = [5, 10, 15, 20, 30]
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .bottom) {
-                ScrollView {
-                    VStack(spacing: 14) {
-                        soundRow
-                        fadeCard
-                        volumeCard
-                        nudgeCard
-                    }
-                    .padding(.horizontal, 18)
-                    .padding(.bottom, 90)
-                }
-
-                closeButton
+        ScrollView {
+            VStack(spacing: 14) {
+                soundRow
+                fadeCard
+                volumeCard
+                nudgeCard
             }
-            .background(Theme.sheetBackground)
-            .navigationTitle("Alarm settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Theme.sheetBackground, for: .navigationBar)
-            .navigationDestination(for: String.self) { destination in
-                if destination == "sounds" {
-                    SoundLibraryView(settings: settings)
-                }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 90)
+        }
+        .background(Theme.sheetBackground)
+        .navigationTitle("Alarm settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: String.self) { destination in
+            if destination == "sounds" {
+                SoundLibraryView(settings: settings)
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Sound
@@ -268,22 +295,6 @@ struct AlarmOptionsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
-
-    private var closeButton: some View {
-        Button {
-            dismiss()
-        } label: {
-            Text("Close")
-                .font(.headline)
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, 44)
-                .padding(.vertical, 15)
-                .background(.ultraThinMaterial, in: Capsule())
-                .overlay(Capsule().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
-        }
-        .padding(.bottom, 12)
-        .accessibilityLabel("Close alarm settings")
     }
 }
 
