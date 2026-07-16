@@ -52,6 +52,9 @@ targets:
     settings:
       base:
         SKIP_INSTALL: YES
+        # Extension bundle IDs must be children of the host app's ID or the
+        # app fails to install on the simulator.
+        PRODUCT_BUNDLE_IDENTIFIER: com.placeholder.GentleWake.widgets
   GentleWakeUITests:
     type: bundle.ui-testing
     platform: iOS
