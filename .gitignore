@@ -1,0 +1,16 @@
+# Xcode
+*.xcodeproj/
+!*.xcodeproj/project.pbxproj
+DerivedData/
+build/
+*.xcresult
+
+# The project file is generated — run `xcodegen generate` after cloning.
+*.xcodeproj
+
+# macOS
+.DS_Store
+
+# Never commit source-app reference material (lives outside the repo anyway)
+brand assets/
+*.pdf

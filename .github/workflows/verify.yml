@@ -1,0 +1,83 @@
+name: Build & Screenshot
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    name: Verify on ${{ matrix.size }} iPhone
+    runs-on: macos-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Preference-ordered candidates; the first available simulator wins.
+          - size: smallest
+            candidates: '["iPhone SE (3rd generation)", "iPhone 16e", "iPhone 16"]'
+          - size: largest
+            candidates: '["iPhone 17 Pro Max", "iPhone 16 Pro Max", "iPhone 15 Pro Max"]'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen chargepoint/xcparse/xcparse
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Pick simulator
+        id: sim
+        run: |
+          xcrun simctl list devices available -j > sims.json
+          NAME=$(python3 - <<'EOF'
+          import json
+          candidates = json.loads('${{ matrix.candidates }}')
+          sims = json.load(open("sims.json"))
+          available = {d["name"] for devs in sims["devices"].values() for d in devs if d.get("isAvailable")}
+          for c in candidates:
+              if c in available:
+                  print(c)
+                  break
+          else:
+              iphones = sorted(n for n in available if n.startswith("iPhone"))
+              print(iphones[0] if iphones else "")
+          EOF
+          )
+          if [ -z "$NAME" ]; then echo "No iPhone simulator available"; exit 1; fi
+          echo "Using simulator: $NAME"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Build and run screenshot tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project GentleWake.xcodeproj \
+            -scheme GentleWake \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -resultBundlePath TestResults.xcresult \
+            | tail -100
+
+      - name: Extract screenshots
+        if: always()
+        run: |
+          mkdir -p screenshots
+          xcparse attachments TestResults.xcresult screenshots || true
+          ls -la screenshots || true
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.size }}
+          path: screenshots/
+          if-no-files-found: warn
+
+      - name: Upload result bundle on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.size }}
+          path: TestResults.xcresult
