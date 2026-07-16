@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(AlarmCoordinator.self) private var coordinator
     @Query private var storedSettings: [AlarmSettings]
     @State private var activeSheet: Sheet?
 
@@ -20,7 +21,26 @@ struct HomeView: View {
                 content(settings)
             }
         }
-        .onAppear(perform: ensureSettingsExist)
+        .onAppear {
+            ensureSettingsExist()
+            let context = modelContext
+            coordinator.attach {
+                try? context.fetch(FetchDescriptor<AlarmSettings>()).first
+            }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { coordinator.showsSleepUI },
+            set: { _ in }
+        )) {
+            if let settings = storedSettings.first {
+                switch coordinator.phase {
+                case .ringing, .nudging:
+                    RingingView(settings: settings)
+                default:
+                    SleepModeView(settings: settings)
+                }
+            }
+        }
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .profile:
@@ -101,6 +121,11 @@ struct HomeView: View {
     private func alarmToggle(_ settings: AlarmSettings) -> some View {
         Button {
             settings.isEnabled.toggle()
+            if settings.isEnabled {
+                coordinator.armed(settings)
+            } else {
+                coordinator.disarmed()
+            }
             Haptics.toggle()
         } label: {
             HStack(spacing: 8) {
@@ -144,7 +169,53 @@ struct HomeView: View {
     // MARK: - Bootstrap
 
     private func ensureSettingsExist() {
-        guard storedSettings.isEmpty else { return }
-        modelContext.insert(AlarmSettings())
+        let settings: AlarmSettings
+        if let existing = storedSettings.first {
+            settings = existing
+        } else {
+            settings = AlarmSettings()
+            modelContext.insert(settings)
+        }
+        applyUITestScenario(to: settings)
+    }
+
+    /// UI tests pass `-UITestScenario <name>` to put the app into a known
+    /// state: `clean` resets persisted settings so screenshots are
+    /// deterministic; `sleepCycle` arms a compressed sleep window (paired
+    /// with the scaled debug clock); `backupChain` exercises the tier-3
+    /// notification chain on a short real-time fuse.
+    private func applyUITestScenario(to settings: AlarmSettings) {
+        switch UserDefaults.standard.string(forKey: "UITestScenario") {
+        case "clean":
+            settings.bedtimeMinutes = 23 * 60
+            settings.wakeMinutes = 7 * 60
+            settings.isEnabled = false
+            settings.fadeInMinutes = 15
+            settings.fadeCurve = FadeCurve.gentle.rawValue
+            settings.startVolume = 0
+            settings.endVolume = 0.8
+            settings.nudgeEnabled = true
+            settings.soundID = "cabin-day"
+            settings.randomSoundMode = false
+        case "sleepCycle":
+            settings.bedtimeMinutes = 23 * 60
+            settings.wakeMinutes = 23 * 60 + 10
+            settings.fadeInMinutes = 5
+            settings.isEnabled = true
+            settings.startVolume = 0
+            settings.endVolume = 0.8
+            settings.nudgeEnabled = true
+        case "backupChain":
+            settings.isEnabled = false
+            Task {
+                _ = await NotificationBackup.requestAuthorization()
+                await NotificationBackup.schedule(
+                    wakeMinutes: settings.wakeMinutes,
+                    debugLeadSeconds: 12
+                )
+            }
+        default:
+            break
+        }
     }
 }

@@ -1,37 +1,48 @@
 import XCTest
 
-/// Walks every screen in the current phase and attaches a screenshot of each.
-/// CI extracts the attachments as the phase-checkpoint artifacts that get
-/// compared side-by-side against the reference screenshots.
+/// Walks every screen and attaches a screenshot of each; CI extracts the
+/// attachments as phase-checkpoint artifacts compared against the reference
+/// screenshots. The Z-prefixed tests run last (alphabetical order) and
+/// exercise the LIVE alarm engine — time-compressed via the debug clock —
+/// rather than static UI.
 final class ScreenshotTests: XCTestCase {
 
     override func setUp() {
         continueAfterFailure = false
     }
 
+    /// Launches with a scenario; `clean` resets persisted state so every
+    /// screenshot is deterministic regardless of test order.
+    @MainActor
+    private func launchApp(scenario: String = "clean", extraArgs: [String] = []) -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments =
+            ["-UITestScenario", scenario, "-UITestSkipNotifAuth", "YES"] + extraArgs
+        app.launch()
+        return app
+    }
+
+    // MARK: - Static screens
+
     @MainActor
     func testHomeScreen() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         snap(app, "01-home-alarm-off")
     }
 
     @MainActor
     func testAlarmToggledOn() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         app.buttons["Alarm"].tap()
         snap(app, "02-home-alarm-on")
-        // Leave the store as we found it.
         app.buttons["Alarm"].tap()
     }
 
     @MainActor
     func testProfileSheet() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         app.buttons["Profile"].tap()
         sleepBriefly()
@@ -40,8 +51,7 @@ final class ScreenshotTests: XCTestCase {
 
     @MainActor
     func testNextSleepSheet() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         let pill = app.buttons.matching(
             NSPredicate(format: "label BEGINSWITH 'Sleep duration'")
@@ -54,8 +64,7 @@ final class ScreenshotTests: XCTestCase {
 
     @MainActor
     func testAlarmOptionsSheet() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         app.buttons["Alarm options"].tap()
         sleepBriefly()
@@ -63,9 +72,17 @@ final class ScreenshotTests: XCTestCase {
     }
 
     @MainActor
+    func testHomeAtAccessibilityTextSize() {
+        let app = launchApp(extraArgs: [
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL",
+        ])
+        waitForHome(app)
+        snap(app, "06-home-dynamic-type-axL")
+    }
+
+    @MainActor
     func testSoundLibrary() {
-        let app = XCUIApplication()
-        app.launch()
+        let app = launchApp()
         waitForHome(app)
         app.buttons["Alarm options"].tap()
         sleepBriefly()
@@ -78,29 +95,87 @@ final class ScreenshotTests: XCTestCase {
         sleepBriefly()
         snap(app, "07-sound-library")
 
-        // Select a different sound and capture the selected state.
         let alps = app.buttons["Alps"]
         XCTAssertTrue(alps.waitForExistence(timeout: 5))
         alps.tap()
         sleepBriefly()
         snap(app, "08-sound-library-selected")
 
-        // Scroll to the bottom category so all three sections get captured.
         app.swipeUp()
         app.swipeUp()
         snap(app, "09-sound-library-nudge-section")
     }
 
-    /// Home at an accessibility Dynamic Type size — layout must not break.
+    // MARK: - Live alarm engine (time-compressed)
+
+    /// Full sleep cycle at 60× speed: bedtime 23:00 → fade from 23:05 →
+    /// ring at 23:10 → nudge at 23:13, then dismiss. One scaled minute per
+    /// real second, so the whole night takes ~20 seconds.
     @MainActor
-    func testHomeAtAccessibilityTextSize() {
+    func testZSleepCycleLive() {
+        let app = launchApp(scenario: "sleepCycle", extraArgs: [
+            "-DebugClockStartMinutes", "1378", // 22:58
+            "-DebugClockScale", "60",
+        ])
+
+        XCTAssertTrue(
+            app.staticTexts["Sleep well!"].waitForExistence(timeout: 15),
+            "Sleep mode never appeared at bedtime"
+        )
+        snap(app, "10-sleep-mode")
+
+        XCTAssertTrue(
+            app.staticTexts["Rising gently"].waitForExistence(timeout: 20),
+            "Fade phase never started"
+        )
+        snap(app, "11-sleep-fading")
+
+        XCTAssertTrue(
+            app.staticTexts["Time to rise!"].waitForExistence(timeout: 20),
+            "Ringing screen never appeared at wake time"
+        )
+        snap(app, "12-ringing")
+
+        XCTAssertTrue(
+            app.staticTexts["Nudge fail-safe active"].waitForExistence(timeout: 20),
+            "Nudge tier never engaged"
+        )
+        snap(app, "13-ringing-nudge")
+
+        app.buttons["I'm awake"].tap()
+        XCTAssertTrue(
+            app.buttons["Alarm"].waitForExistence(timeout: 10),
+            "Dismissing the alarm did not return home"
+        )
+        snap(app, "14-home-after-dismiss")
+    }
+
+    /// Tier 3: backup notifications actually deliver. Schedules the chain on
+    /// a 12-second fuse, backgrounds the app, and waits for the banner on
+    /// the springboard.
+    @MainActor
+    func testZZBackupNotificationChain() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let app = XCUIApplication()
-        app.launchArguments = [
-            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityL",
-        ]
+        app.launchArguments = ["-UITestScenario", "backupChain"]
         app.launch()
-        waitForHome(app)
-        snap(app, "06-home-dynamic-type-axL")
+
+        let allow = springboard.buttons["Allow"]
+        if allow.waitForExistence(timeout: 8) {
+            allow.tap()
+        }
+
+        XCUIDevice.shared.press(.home)
+
+        let banner = springboard.staticTexts["Time to rise!"]
+        XCTAssertTrue(
+            banner.waitForExistence(timeout: 45),
+            "Backup notification banner never arrived"
+        )
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "15-backup-notification-banner"
+        shot.lifetime = .keepAlways
+        add(shot)
     }
 
     // MARK: - Helpers
@@ -119,7 +194,6 @@ final class ScreenshotTests: XCTestCase {
     }
 
     private func sleepBriefly() {
-        // Let sheet presentation animation settle before capturing.
         Thread.sleep(forTimeInterval: 0.8)
     }
 }
