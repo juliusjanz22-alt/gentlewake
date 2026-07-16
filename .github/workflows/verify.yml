@@ -32,23 +32,37 @@ jobs:
         id: sim
         run: |
           xcrun simctl list devices available -j > sims.json
-          NAME=$(python3 - <<'EOF'
+          PICK=$(python3 - <<'EOF'
           import json
           candidates = json.loads('${{ matrix.candidates }}')
           sims = json.load(open("sims.json"))
-          available = {d["name"] for devs in sims["devices"].values() for d in devs if d.get("isAvailable")}
+          # (runtime, name) -> udid, newest runtime first so name collisions
+          # across iOS versions resolve to the most recent simulator.
+          def runtime_key(rt):
+              return [int(p) for p in rt.rsplit(".", 1)[-1].replace("iOS-", "").split("-") if p.isdigit()]
+          entries = []
+          for rt, devs in sims["devices"].items():
+              if "iOS" not in rt:
+                  continue
+              for d in devs:
+                  if d.get("isAvailable"):
+                      entries.append((runtime_key(rt), d["name"], d["udid"]))
+          entries.sort(key=lambda e: e[0], reverse=True)
           for c in candidates:
-              if c in available:
-                  print(c)
-                  break
-          else:
-              iphones = sorted(n for n in available if n.startswith("iPhone"))
-              print(iphones[0] if iphones else "")
+              for _, name, udid in entries:
+                  if name == c:
+                      print(f"{name}|{udid}")
+                      raise SystemExit
+          for _, name, udid in entries:
+              if name.startswith("iPhone"):
+                  print(f"{name}|{udid}")
+                  raise SystemExit
           EOF
           )
-          if [ -z "$NAME" ]; then echo "No iPhone simulator available"; exit 1; fi
-          echo "Using simulator: $NAME"
-          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          if [ -z "$PICK" ]; then echo "No iPhone simulator available"; exit 1; fi
+          NAME="${PICK%%|*}"; UDID="${PICK##*|}"
+          echo "Using simulator: $NAME ($UDID)"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
       - name: Build and run screenshot tests
         run: |
@@ -56,7 +70,7 @@ jobs:
           xcodebuild test \
             -project GentleWake.xcodeproj \
             -scheme GentleWake \
-            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" \
             -resultBundlePath TestResults.xcresult \
             | tail -100
 

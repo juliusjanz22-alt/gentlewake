@@ -59,7 +59,36 @@ final class ScreenshotTests: XCTestCase {
         waitForHome(app)
         app.buttons["Alarm options"].tap()
         sleepBriefly()
-        snap(app, "05-alarm-options-stub")
+        snap(app, "05-alarm-options")
+    }
+
+    @MainActor
+    func testSoundLibrary() {
+        let app = XCUIApplication()
+        app.launch()
+        waitForHome(app)
+        app.buttons["Alarm options"].tap()
+        sleepBriefly()
+
+        let soundRow = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH 'Alarm sound'")
+        ).firstMatch
+        XCTAssertTrue(soundRow.waitForExistence(timeout: 5))
+        soundRow.tap()
+        sleepBriefly()
+        snap(app, "07-sound-library")
+
+        // Select a different sound and capture the selected state.
+        let alps = app.buttons["Alps"]
+        XCTAssertTrue(alps.waitForExistence(timeout: 5))
+        alps.tap()
+        sleepBriefly()
+        snap(app, "08-sound-library-selected")
+
+        // Scroll to the bottom category so all three sections get captured.
+        app.swipeUp()
+        app.swipeUp()
+        snap(app, "09-sound-library-nudge-section")
     }
 
     /// Home at an accessibility Dynamic Type size — layout must not break.

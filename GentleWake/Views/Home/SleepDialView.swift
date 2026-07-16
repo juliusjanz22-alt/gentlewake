@@ -51,8 +51,12 @@ struct SleepDialView: View {
     private func ring(ringRadius: CGFloat, ringWidth: CGFloat) -> some View {
         let bedFraction = Double(settings.bedtimeMinutes) / 1440
         let sweepFraction = Double(settings.sleepDurationMinutes) / 1440
+        // Color order is reversed relative to the visual sweep: AngularGradient
+        // angles run opposite to Circle.trim's direction here (verified against
+        // CI screenshots), so listing bright-first lands deep at the bedtime
+        // end and bright at the wake end, matching the reference.
         let gradient = AngularGradient(
-            colors: [Theme.accentDeep, Theme.accent, Theme.accentBright],
+            colors: [Theme.accentBright, Theme.accent, Theme.accentDeep],
             center: .center,
             startAngle: .degrees(0),
             endAngle: .degrees(sweepFraction * 360)

@@ -4,7 +4,6 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var storedSettings: [AlarmSettings]
-    @State private var trial = TrialManager()
     @State private var activeSheet: Sheet?
 
     private enum Sheet: String, Identifiable {
@@ -29,7 +28,9 @@ struct HomeView: View {
             case .nextSleep:
                 PlaceholderSheet(title: "Your next sleep", phase: "Phase 4")
             case .alarmOptions:
-                PlaceholderSheet(title: "Alarm settings", phase: "Phase 2")
+                if let settings = storedSettings.first {
+                    AlarmOptionsView(settings: settings)
+                }
             }
         }
     }
@@ -45,7 +46,6 @@ struct HomeView: View {
             SleepDialView(settings: settings) {
                 activeSheet = .alarmOptions
             }
-            .padding(.horizontal, 10)
 
             Spacer(minLength: 12)
 
@@ -57,20 +57,10 @@ struct HomeView: View {
 
     // MARK: - Top bar
 
+    // The reference app shows a trial counter here; this rebuild is fully
+    // free, so the top bar carries only the profile button.
     private var topBar: some View {
         HStack {
-            HStack(spacing: 7) {
-                Image(systemName: "clock.fill")
-                    .font(.footnote)
-                    .foregroundStyle(Theme.accentBright)
-                Text("\(trial.daysLeft) days left")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            .glassPill(horizontalPadding: 14, verticalPadding: 9)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Free trial: \(trial.daysLeft) days left")
-
             Spacer()
 
             CircleGlassButton(systemImage: "person.fill", label: "Profile") {
