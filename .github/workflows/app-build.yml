@@ -1,0 +1,46 @@
+name: Build runnable app
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+# Produces a simulator .app you can run interactively in a browser via
+# Appetize.io — no local Xcode, no Apple account, no Mac required on your end.
+jobs:
+  build-app:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build simulator app
+        run: |
+          xcodebuild build \
+            -project GentleWake.xcodeproj \
+            -scheme GentleWake \
+            -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO | tail -40
+
+      - name: Zip the .app
+        run: |
+          APP="build/Build/Products/Release-iphonesimulator/GentleWake.app"
+          if [ ! -d "$APP" ]; then echo "No .app produced"; exit 1; fi
+          cd "$(dirname "$APP")"
+          zip -r -y -q "$GITHUB_WORKSPACE/GentleWake-sim.zip" "GentleWake.app"
+          echo "Zipped: $(du -h "$GITHUB_WORKSPACE/GentleWake-sim.zip" | cut -f1)"
+
+      - name: Upload runnable app
+        uses: actions/upload-artifact@v4
+        with:
+          name: GentleWake-sim-app
+          path: GentleWake-sim.zip
+          if-no-files-found: error
