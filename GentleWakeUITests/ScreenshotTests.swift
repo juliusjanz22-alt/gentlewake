@@ -141,14 +141,15 @@ final class ScreenshotTests: XCTestCase {
 
     // MARK: - Live alarm engine (time-compressed)
 
-    /// Full sleep cycle at 60× speed: bedtime 23:00 → fade from 23:05 →
-    /// ring at 23:10 → nudge at 23:13, then dismiss. One scaled minute per
-    /// real second, so the whole night takes ~20 seconds.
+    /// Full sleep cycle at 30× speed: bedtime 23:00 → fade from 23:10 →
+    /// ring at 23:20, nudge three scaled minutes later, then dismiss.
+    /// Slow enough that the Live Activity screenshot detour (backgrounding
+    /// the app for a few real seconds) can't consume the fade window.
     @MainActor
     func testZSleepCycleLive() {
         let app = launchApp(scenario: "sleepCycle", extraArgs: [
             "-DebugClockStartMinutes", "1378", // 22:58
-            "-DebugClockScale", "60",
+            "-DebugClockScale", "30",
         ])
 
         XCTAssertTrue(
@@ -168,13 +169,13 @@ final class ScreenshotTests: XCTestCase {
         app.activate()
 
         XCTAssertTrue(
-            app.staticTexts["Rising gently"].waitForExistence(timeout: 20),
+            app.staticTexts["Rising gently"].waitForExistence(timeout: 40),
             "Fade phase never started"
         )
         snap(app, "11-sleep-fading")
 
         XCTAssertTrue(
-            app.staticTexts["Time to rise!"].waitForExistence(timeout: 20),
+            app.staticTexts["Time to rise!"].waitForExistence(timeout: 40),
             "Ringing screen never appeared at wake time"
         )
         snap(app, "12-ringing")

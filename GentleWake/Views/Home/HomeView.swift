@@ -228,8 +228,8 @@ struct HomeView: View {
             try? modelContext.delete(model: SleepSession.self)
         case "sleepCycle":
             settings.bedtimeMinutes = 23 * 60
-            settings.wakeMinutes = 23 * 60 + 10
-            settings.fadeInMinutes = 5
+            settings.wakeMinutes = 23 * 60 + 20
+            settings.fadeInMinutes = 10
             settings.isEnabled = true
             settings.startVolume = 0
             settings.endVolume = 0.8
