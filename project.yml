@@ -15,7 +15,11 @@ targets:
     type: application
     platform: iOS
     sources:
-      - GentleWake
+      - path: GentleWake
+        excludes:
+          - "Info.plist"
+          - "Info-Lite.plist"
+          - "GentleWake.entitlements"
     dependencies:
       - target: GentleWakeWidgets
         embed: true
@@ -48,6 +52,9 @@ targets:
       - path: GentleWake
         excludes:
           - "Shared/**"
+          - "Info.plist"
+          - "Info-Lite.plist"
+          - "GentleWake.entitlements"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.placeholder.GentleWakeLite

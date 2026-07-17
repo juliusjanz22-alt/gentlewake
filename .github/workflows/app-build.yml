@@ -22,13 +22,17 @@ jobs:
 
       - name: Build simulator app
         run: |
-          xcodebuild build \
+          if xcodebuild build \
             -project GentleWake.xcodeproj \
             -scheme GentleWake \
             -configuration Release \
             -destination "generic/platform=iOS Simulator" \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO | tail -40
+            CODE_SIGNING_ALLOWED=NO > xcodebuild-sim.log 2>&1; then
+            tail -20 xcodebuild-sim.log
+          else
+            tail -200 xcodebuild-sim.log; exit 1
+          fi
 
       - name: Zip the .app
         run: |
@@ -61,13 +65,17 @@ jobs:
 
       - name: Build unsigned device app (Lite)
         run: |
-          xcodebuild build \
+          if xcodebuild build \
             -project GentleWake.xcodeproj \
             -scheme GentleWakeLite \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -40
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" > xcodebuild-ipa.log 2>&1; then
+            tail -20 xcodebuild-ipa.log
+          else
+            tail -200 xcodebuild-ipa.log; exit 1
+          fi
 
       - name: Package unsigned .ipa
         run: |
