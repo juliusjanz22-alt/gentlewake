@@ -14,7 +14,9 @@ struct ProfileView: View {
         case sounds
         case nextSleep
         case morningBrief
+        #if !LITE
         case sunrise
+        #endif
         case faq
     }
 
@@ -42,12 +44,14 @@ struct ProfileView: View {
                             subtitle: "Choose what appears when you wake: calendar, weather, reminders",
                             destination: .morningBrief
                         )
+                        #if !LITE
                         row(
                             icon: "sunrise.fill",
                             title: "Smart light sunrise",
                             subtitle: "Sync your bedroom lights with the fade-in via Apple Home",
                             destination: .sunrise
                         )
+                        #endif
                         row(
                             icon: "questionmark.circle.fill",
                             title: "FAQ & Feedback",
@@ -76,8 +80,10 @@ struct ProfileView: View {
                     NextSleepView(settings: settings)
                 case .morningBrief:
                     MorningBriefSettingsView(settings: settings)
+                #if !LITE
                 case .sunrise:
                     SunriseSettingsView(settings: settings)
+                #endif
                 case .faq:
                     FAQView()
                 }

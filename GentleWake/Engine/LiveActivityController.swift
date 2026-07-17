@@ -1,5 +1,19 @@
-import ActivityKit
 import Foundation
+
+#if LITE
+
+/// LITE build (free-provisioning sideload): Live Activities need the widget
+/// extension + entitlement, which a free Apple ID can't sign. Stub keeps the
+/// coordinator's call sites unchanged while doing nothing.
+final class LiveActivityController {
+    func begin(bedtimeText: String, wakeTimeText: String) {}
+    func update(phaseName: String, progress: Double, wakeTimeText: String) {}
+    func end() {}
+}
+
+#else
+
+import ActivityKit
 
 /// Starts/updates/ends the sleep Live Activity alongside the coordinator's
 /// phase transitions. Fade progress updates are throttled — ActivityKit
@@ -48,3 +62,5 @@ final class LiveActivityController {
         }
     }
 }
+
+#endif

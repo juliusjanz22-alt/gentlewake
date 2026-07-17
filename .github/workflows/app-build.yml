@@ -44,3 +44,43 @@ jobs:
           name: GentleWake-sim-app
           path: GentleWake-sim.zip
           if-no-files-found: error
+
+  # Unsigned device .ipa for sideloading the trimmed (Lite) build onto a
+  # physical iPhone with a free Apple ID via Sideloadly/AltStore.
+  build-ipa:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: xcodegen generate
+
+      - name: Build unsigned device app (Lite)
+        run: |
+          xcodebuild build \
+            -project GentleWake.xcodeproj \
+            -scheme GentleWakeLite \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" | tail -40
+
+      - name: Package unsigned .ipa
+        run: |
+          APP="build/Build/Products/Release-iphoneos/GentleWakeLite.app"
+          if [ ! -d "$APP" ]; then echo "No device .app produced"; exit 1; fi
+          rm -rf Payload && mkdir Payload
+          cp -R "$APP" "Payload/GentleWakeLite.app"
+          zip -r -q GentleWake-Lite-unsigned.ipa Payload
+          echo "IPA: $(du -h GentleWake-Lite-unsigned.ipa | cut -f1)"
+
+      - name: Upload unsigned .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: GentleWake-Lite-ipa
+          path: GentleWake-Lite-unsigned.ipa
+          if-no-files-found: error

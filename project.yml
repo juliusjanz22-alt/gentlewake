@@ -37,6 +37,29 @@ targets:
         NSHealthShareUsageDescription: Reads your sleep data to refine the sleep gate and show your real sleep trend.
         NSHealthUpdateUsageDescription: Saves nights recorded by the app to Apple Health.
         NSHomeKitUsageDescription: Controls your bedroom lights for the smart light sunrise during the alarm fade-in.
+  # Trimmed build for free-provisioning sideloading onto a physical iPhone:
+  # no widget extension, no HealthKit/HomeKit entitlements (a free Apple ID
+  # can't sign them). Background audio + local notifications — the core
+  # gradual-wake experience — are allowed on free provisioning and stay in.
+  GentleWakeLite:
+    type: application
+    platform: iOS
+    sources:
+      - path: GentleWake
+        excludes:
+          - "Shared/**"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.placeholder.GentleWakeLite
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: LITE
+    info:
+      path: GentleWake/Info-Lite.plist
+      properties:
+        CFBundleDisplayName: GentleWake
+        UILaunchScreen: {}
+        UIUserInterfaceStyle: Dark
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIBackgroundModes: [audio]
   GentleWakeWidgets:
     type: app-extension
     platform: iOS
@@ -73,3 +96,9 @@ schemes:
       config: Debug
       targets:
         - GentleWakeUITests
+  GentleWakeLite:
+    build:
+      targets:
+        GentleWakeLite: all
+    run:
+      config: Release

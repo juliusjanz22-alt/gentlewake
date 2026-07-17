@@ -1,3 +1,6 @@
+// Compiled out of the LITE (free-provisioning sideload) build — HomeKit
+// can't be signed by a free Apple ID.
+#if !LITE
 import HomeKit
 import SwiftUI
 import SwiftData
@@ -126,3 +129,5 @@ struct SunriseSettingsView: View {
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
+
+#endif

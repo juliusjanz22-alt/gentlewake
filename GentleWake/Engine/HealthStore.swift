@@ -1,4 +1,29 @@
 import Foundation
+
+#if LITE
+
+/// LITE build (free-provisioning sideload): the HealthKit entitlement can't
+/// be signed by a free Apple ID, so this stub reports "unavailable" and the
+/// tracking UI falls back to locally recorded nights + sample data. Call
+/// sites elsewhere stay unchanged.
+final class HealthStore {
+    static let shared = HealthStore()
+
+    var isAvailable: Bool { false }
+    var isConnected: Bool { false }
+
+    @discardableResult
+    func requestAuthorization() async -> Bool { false }
+
+    func recentNights(days: Int = 7) async -> [(date: Date, minutes: Int)] { [] }
+
+    func contribute(session: SleepSession) async {}
+
+    func seedSampleNights(count: Int = 5) async {}
+}
+
+#else
+
 import HealthKit
 
 /// Sleep-analysis bridge to Apple Health. Read access enriches the trend and
@@ -97,3 +122,5 @@ final class HealthStore {
         }
     }
 }
+
+#endif

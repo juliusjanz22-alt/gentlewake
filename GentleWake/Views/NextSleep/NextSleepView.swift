@@ -403,7 +403,7 @@ struct NextSleepView: View {
             .accessibilityHint("Connects Apple Health sleep data")
 
             if healthUnavailable {
-                Text("Apple Health isn't available on this device.")
+                Text("Apple Health isn't connected in this build.")
                     .font(.caption2)
                     .foregroundStyle(Theme.warning)
             }

@@ -1,6 +1,22 @@
 import Foundation
-import HomeKit
 import Observation
+
+#if LITE
+
+/// LITE build (free-provisioning sideload): the HomeKit entitlement can't be
+/// signed by a free Apple ID, so this stub stands in. The sunrise settings
+/// screen is compiled out under LITE; the coordinator's sunrise hook calls
+/// these no-ops.
+@Observable
+final class HomeStore {
+    func connect() {}
+    func applySunrise(progress: Double, accessoryIDs: Set<String>) {}
+    func resetSunrise() {}
+}
+
+#else
+
+import HomeKit
 
 /// HomeKit bridge for the smart-light sunrise. Instantiated lazily —
 /// creating HMHomeManager triggers the system permission prompt, so nothing
@@ -55,3 +71,5 @@ final class HomeStore: NSObject, HMHomeManagerDelegate {
         lastAppliedStep = -1
     }
 }
+
+#endif
