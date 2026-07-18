@@ -7,6 +7,7 @@ import SwiftData
 struct ProfileView: View {
     @Bindable var settings: AlarmSettings
     @Environment(\.dismiss) private var dismiss
+    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.defaultRaw
     @State private var path: [Destination] = []
 
     enum Destination: Hashable {
@@ -25,6 +26,7 @@ struct ProfileView: View {
             ZStack(alignment: .bottom) {
                 ScrollView {
                     VStack(spacing: 14) {
+                        appearanceCard
                         row(
                             icon: "alarm.fill",
                             title: "Alarm Settings",
@@ -89,6 +91,38 @@ struct ProfileView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Appearance
+
+    private var appearanceCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 14) {
+                Image(systemName: "circle.lefthalf.filled")
+                    .font(.body)
+                    .foregroundStyle(Theme.accent)
+                    .frame(width: 30)
+                Text("Appearance")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Theme.textPrimary)
+            }
+
+            Picker("Appearance", selection: $appearanceRaw) {
+                ForEach(AppearanceMode.allCases) { mode in
+                    Text(mode.label).tag(mode.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+        }
+        .padding(16)
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .strokeBorder(Theme.surfaceStroke, lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Appearance")
+        .accessibilityValue(AppearanceMode(rawValue: appearanceRaw)?.label ?? "Light")
     }
 
     // MARK: - Rows

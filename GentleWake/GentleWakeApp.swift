@@ -5,6 +5,7 @@ import SwiftData
 struct GentleWakeApp: App {
     @State private var coordinator = AlarmCoordinator()
     @State private var homeStore = HomeStore()
+    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.defaultRaw
 
     var body: some Scene {
         WindowGroup {
@@ -12,10 +13,8 @@ struct GentleWakeApp: App {
                 .environment(coordinator)
                 .environment(homeStore)
                 .tint(Theme.accent)
-                // Light is the primary identity of the redesign. The theme
-                // fully supports dark (kept for a future Auto/Dark toggle);
-                // forcing light here means everyone sees the intended look.
-                .preferredColorScheme(.light)
+                // Driven by the Appearance setting in Profile; light default.
+                .preferredColorScheme(AppearanceMode(rawValue: appearanceRaw)?.colorScheme)
         }
         .modelContainer(for: [AlarmSettings.self, SleepSession.self])
     }

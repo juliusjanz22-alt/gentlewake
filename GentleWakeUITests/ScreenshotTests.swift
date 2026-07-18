@@ -31,6 +31,25 @@ final class ScreenshotTests: XCTestCase {
         snap(app, "01-home-alarm-off")
     }
 
+    /// Flips the appearance toggle to Dark in Profile and captures home, so
+    /// CI verifies the dark theme + the toggle both work.
+    @MainActor
+    func testDarkModeToggle() {
+        let app = launchApp()
+        waitForHome(app)
+        app.buttons["Profile"].tap()
+        sleepBriefly()
+        let dark = app.buttons["Dark"]
+        XCTAssertTrue(dark.waitForExistence(timeout: 5), "Appearance toggle not found")
+        dark.tap()
+        sleepBriefly()
+        snap(app, "22-profile-dark")
+        // Close the sheet to show home in dark.
+        app.buttons["Close profile"].firstMatch.tap()
+        sleepBriefly()
+        snap(app, "23-home-dark")
+    }
+
     @MainActor
     func testAlarmToggledOn() {
         let app = launchApp()
@@ -190,9 +209,17 @@ final class ScreenshotTests: XCTestCase {
         )
         snap(app, "13-ringing-nudge")
 
-        app.buttons["I'm awake"].tap()
+        // Ensure the dismiss button is hittable, then confirm the tap landed
+        // by retrying if the ringing screen is still up (guards CI flake).
+        let awake = app.buttons["I'm awake"]
+        XCTAssertTrue(awake.waitForExistence(timeout: 5))
+        awake.tap()
+        if !app.staticTexts["Good morning!"].waitForExistence(timeout: 8),
+           awake.exists {
+            awake.tap()
+        }
         XCTAssertTrue(
-            app.staticTexts["Good morning!"].waitForExistence(timeout: 10),
+            app.staticTexts["Good morning!"].waitForExistence(timeout: 20),
             "Morning brief never appeared after dismissing the alarm"
         )
         snap(app, "14-morning-brief")

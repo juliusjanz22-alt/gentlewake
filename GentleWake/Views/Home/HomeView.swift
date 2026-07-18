@@ -236,6 +236,9 @@ struct HomeView: View {
             settings.nudgeEnabled = true
             settings.soundID = "cabin-day"
             settings.randomSoundMode = false
+            // Reset appearance to light so the dark-toggle test doesn't leave
+            // later tests rendering dark (UserDefaults persists across launches).
+            UserDefaults.standard.set(AppearanceMode.light.rawValue, forKey: AppearanceMode.storageKey)
             // Wipe recorded nights so trend/consistency screenshots are
             // deterministic regardless of which live tests ran before.
             try? modelContext.delete(model: SleepSession.self)
