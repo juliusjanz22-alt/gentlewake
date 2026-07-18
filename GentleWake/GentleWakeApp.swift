@@ -11,7 +11,11 @@ struct GentleWakeApp: App {
             HomeView()
                 .environment(coordinator)
                 .environment(homeStore)
-                .tint(Theme.accentBright)
+                .tint(Theme.accent)
+                // Light is the primary identity of the redesign. The theme
+                // fully supports dark (kept for a future Auto/Dark toggle);
+                // forcing light here means everyone sees the intended look.
+                .preferredColorScheme(.light)
         }
         .modelContainer(for: [AlarmSettings.self, SleepSession.self])
     }

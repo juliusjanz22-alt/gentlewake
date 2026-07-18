@@ -64,14 +64,6 @@ jobs:
           echo "Using simulator: $NAME ($UDID)"
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
 
-      - name: Force light appearance for screenshots
-        run: |
-          # The app is appearance-adaptive; the light minimalist look is the
-          # primary design, so screenshot it in light. (Dark still ships.)
-          xcrun simctl boot "${{ steps.sim.outputs.udid }}" 2>/dev/null || true
-          sleep 3
-          xcrun simctl ui "${{ steps.sim.outputs.udid }}" appearance light || true
-
       - name: Build and run screenshot tests
         run: |
           if xcodebuild test \
