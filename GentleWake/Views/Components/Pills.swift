@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// Translucent capsule used for status chips and secondary buttons.
+/// Soft capsule chip: white surface, hairline edge, gentle shadow. Used for
+/// status chips and secondary buttons on the off-white canvas.
 struct GlassPill: ViewModifier {
     var horizontalPadding: CGFloat = 16
     var verticalPadding: CGFloat = 10
@@ -11,6 +12,7 @@ struct GlassPill: ViewModifier {
             .padding(.vertical, verticalPadding)
             .background(Theme.surface, in: Capsule())
             .overlay(Capsule().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
+            .shadow(color: Theme.cardShadow.opacity(0.05), radius: 10, x: 0, y: 4)
     }
 }
 
@@ -20,7 +22,8 @@ extension View {
     }
 }
 
-/// Circular translucent icon button (e.g. the profile button).
+/// Circular icon button (e.g. the profile button): white surface, hairline,
+/// soft shadow, dark glyph.
 struct CircleGlassButton: View {
     let systemImage: String
     let label: String
@@ -31,9 +34,10 @@ struct CircleGlassButton: View {
             Image(systemName: systemImage)
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(Theme.textPrimary)
-                .frame(width: 42, height: 42)
+                .frame(width: 44, height: 44)
                 .background(Theme.surface, in: Circle())
                 .overlay(Circle().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
+                .shadow(color: Theme.cardShadow.opacity(0.05), radius: 10, x: 0, y: 4)
         }
         .accessibilityLabel(label)
     }

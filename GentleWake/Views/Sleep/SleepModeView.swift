@@ -18,7 +18,7 @@ struct SleepModeView: View {
 
     var body: some View {
         ZStack {
-            StarfieldBackground()
+            AppBackground()
 
             VStack(spacing: 0) {
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
@@ -92,13 +92,11 @@ struct SleepModeView: View {
     private var moon: some View {
         ZStack {
             Circle()
-                .fill(Theme.accent.opacity(0.25))
-                .frame(width: 150, height: 150)
-                .blur(radius: 30)
+                .fill(Theme.accentSoft)
+                .frame(width: 132, height: 132)
             Image(systemName: "moon.fill")
-                .font(.system(size: 74))
-                .foregroundStyle(Theme.accentBright)
-                .shadow(color: Theme.accent.opacity(0.9), radius: 24)
+                .font(.system(size: 56))
+                .foregroundStyle(Theme.accent)
         }
         .accessibilityHidden(true)
     }
@@ -107,7 +105,7 @@ struct SleepModeView: View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.08))
+                    .fill(Theme.track)
                 Capsule()
                     .fill(LinearGradient(
                         colors: [Theme.accentDeep, Theme.accentBright],

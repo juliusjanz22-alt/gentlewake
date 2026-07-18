@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// Placeholder card artwork: a deep gradient derived from the sound's stable
-/// hue with its symbol as the motif. The reference app uses illustrated
-/// scenes here — these swap for real artwork at final branding.
+/// Placeholder card artwork: a soft pastel tint derived from the sound's
+/// stable hue with its symbol as the motif, in a tonal (deeper same-hue)
+/// color. The reference app uses illustrated scenes here — these swap for
+/// real artwork at final branding.
 struct SoundArtworkView: View {
     let sound: AlarmSound
 
@@ -11,17 +12,16 @@ struct SoundArtworkView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(hue: sound.artHue, saturation: 0.55, brightness: 0.45),
-                        Color(hue: (sound.artHue + 0.09).truncatingRemainder(dividingBy: 1), saturation: 0.65, brightness: 0.18),
+                        Color(hue: sound.artHue, saturation: 0.28, brightness: 0.95),
+                        Color(hue: (sound.artHue + 0.06).truncatingRemainder(dividingBy: 1), saturation: 0.40, brightness: 0.86),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
 
                 Image(systemName: sound.symbol)
-                    .font(.system(size: geo.size.width * 0.34, weight: .light))
-                    .foregroundStyle(.white.opacity(0.55))
-                    .shadow(color: .black.opacity(0.3), radius: 6)
+                    .font(.system(size: geo.size.width * 0.32, weight: .light))
+                    .foregroundStyle(Color(hue: sound.artHue, saturation: 0.55, brightness: 0.45))
             }
         }
         .accessibilityHidden(true)
@@ -41,12 +41,12 @@ struct SoundCardView: View {
                 .aspectRatio(1, contentMode: .fit)
                 .overlay(alignment: .bottom) {
                     Text(sound.name)
-                        .font(.footnote.weight(.medium))
-                        .foregroundStyle(.white)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(Theme.textPrimary)
                         .lineLimit(1)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(.black.opacity(0.55), in: Capsule())
+                        .background(Theme.surface.opacity(0.9), in: Capsule())
                         .padding(.bottom, 10)
                         .padding(.horizontal, 6)
                 }
@@ -62,7 +62,7 @@ struct SoundCardView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .strokeBorder(
-                            isSelected ? Theme.accentBright : Color.white.opacity(0.08),
+                            isSelected ? Theme.accent : Theme.surfaceStroke,
                             lineWidth: isSelected ? 2 : 1
                         )
                 )

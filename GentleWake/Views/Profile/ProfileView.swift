@@ -89,7 +89,6 @@ struct ProfileView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     // MARK: - Rows

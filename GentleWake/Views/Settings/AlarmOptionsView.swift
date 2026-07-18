@@ -17,7 +17,6 @@ struct AlarmOptionsView: View {
             .background(Theme.sheetBackground)
             .toolbarBackground(Theme.sheetBackground, for: .navigationBar)
         }
-        .preferredColorScheme(.dark)
     }
 
     private var closeButton: some View {
@@ -180,7 +179,7 @@ struct AlarmOptionsContent: View {
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
             .background(
-                isSelected ? Theme.accent.opacity(0.25) : Color.white.opacity(0.03),
+                isSelected ? Theme.accentSoft : Theme.track.opacity(0.5),
                 in: RoundedRectangle(cornerRadius: 14, style: .continuous)
             )
             .overlay(
@@ -286,7 +285,7 @@ struct AlarmOptionsContent: View {
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
                 .background(
-                    isSelected ? Theme.accent.opacity(0.3) : Color.white.opacity(0.03),
+                    isSelected ? Theme.accentSoft : Theme.track.opacity(0.5),
                     in: Capsule()
                 )
                 .overlay(

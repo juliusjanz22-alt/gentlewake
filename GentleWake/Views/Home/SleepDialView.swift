@@ -1,8 +1,8 @@
 import SwiftUI
 import SwiftData
 
-/// The home screen's 24-hour dial. A glowing arc spans the sleep window from
-/// the bedtime handle (moon) clockwise to the wake handle (alarm). Both
+/// The home screen's 24-hour dial. A clean orange arc spans the sleep window
+/// from the bedtime handle (moon) clockwise to the wake handle (alarm). Both
 /// handles drag; dragging the arc body shifts the whole window.
 struct SleepDialView: View {
     @Bindable var settings: AlarmSettings
@@ -51,46 +51,24 @@ struct SleepDialView: View {
     private func ring(ringRadius: CGFloat, ringWidth: CGFloat) -> some View {
         let bedFraction = Double(settings.bedtimeMinutes) / 1440
         let sweepFraction = Double(settings.sleepDurationMinutes) / 1440
-        // Color order is reversed relative to the visual sweep: AngularGradient
-        // angles run opposite to Circle.trim's direction here (verified against
-        // CI screenshots), so listing bright-first lands deep at the bedtime
-        // end and bright at the wake end, matching the reference.
-        let gradient = AngularGradient(
-            colors: [Theme.accentBright, Theme.accent, Theme.accentDeep],
-            center: .center,
-            startAngle: .degrees(0),
-            endAngle: .degrees(sweepFraction * 360)
-        )
 
         return ZStack {
+            // Flat, quiet track.
             Circle()
-                .stroke(Color.white.opacity(0.055), lineWidth: ringWidth)
+                .stroke(Theme.track, lineWidth: ringWidth)
 
-            // Glow layer behind the arc
+            // Solid orange arc, rounded caps — no glow.
             Circle()
                 .trim(from: 0, to: sweepFraction)
-                .stroke(Theme.accent.opacity(0.5), style: StrokeStyle(lineWidth: ringWidth * 1.25, lineCap: .round))
-                .rotationEffect(.degrees(bedFraction * 360 - 90))
-                .blur(radius: 14)
-
-            Circle()
-                .trim(from: 0, to: sweepFraction)
-                .stroke(gradient, style: StrokeStyle(lineWidth: ringWidth, lineCap: .round))
+                .stroke(Theme.accent, style: StrokeStyle(lineWidth: ringWidth, lineCap: .round))
                 .rotationEffect(.degrees(bedFraction * 360 - 90))
         }
         .frame(width: ringRadius * 2, height: ringRadius * 2)
     }
 
-    /// Short white radial ticks marking the exact ends of the sleep arc.
+    /// No decorative end ticks in the clean look — the handles mark the ends.
     private func endTicks(center: CGPoint, ringRadius: CGFloat, ringWidth: CGFloat) -> some View {
-        ForEach([settings.bedtimeMinutes, settings.wakeMinutes], id: \.self) { minutes in
-            Capsule()
-                .fill(Color.white.opacity(0.9))
-                .frame(width: 2.5, height: ringWidth * 0.5)
-                .rotationEffect(.degrees(Double(minutes) / 1440 * 360))
-                .position(point(at: minutes, radius: ringRadius, center: center))
-        }
-        .accessibilityHidden(true)
+        EmptyView()
     }
 
     // MARK: - Ticks + numerals
@@ -99,7 +77,7 @@ struct SleepDialView: View {
         ForEach(0..<96, id: \.self) { index in
             let isHour = index % 4 == 0
             Circle()
-                .fill(Color.white.opacity(isHour ? 0.32 : 0.15))
+                .fill(Theme.textSecondary.opacity(isHour ? 0.45 : 0.2))
                 .frame(width: isHour ? 3 : 2, height: isHour ? 3 : 2)
                 .position(point(at: index * 15, radius: radius, center: center))
         }
@@ -109,9 +87,9 @@ struct SleepDialView: View {
     private func numerals(center: CGPoint, radius: CGFloat, side: CGFloat) -> some View {
         ForEach(Array(stride(from: 0, through: 22, by: 2)), id: \.self) { hour in
             Text("\(hour)")
-                .font(.system(size: side * 0.038, weight: .medium))
+                .font(.system(size: side * 0.036, weight: .medium))
                 .monospacedDigit()
-                .foregroundStyle(Color.white.opacity(0.35))
+                .foregroundStyle(Theme.textSecondary.opacity(0.7))
                 .position(point(at: hour * 60, radius: radius, center: center))
         }
         .accessibilityHidden(true)
@@ -120,29 +98,30 @@ struct SleepDialView: View {
     // MARK: - Center
 
     private func centerContent(side: CGFloat) -> some View {
-        VStack(spacing: side * 0.03) {
-            HStack(spacing: 5) {
-                Image(systemName: "alarm.fill")
-                    .font(.system(size: side * 0.04))
-                Text("Alarm")
-                    .font(.system(size: side * 0.048, weight: .medium))
-            }
-            .foregroundStyle(Theme.textSecondary)
+        VStack(spacing: side * 0.028) {
+            Text("WAKE UP")
+                .font(.system(size: side * 0.036, weight: .semibold))
+                .tracking(2)
+                .foregroundStyle(Theme.textSecondary)
 
             Text(settings.wakeMinutes.asClockTime)
-                .font(.system(size: side * 0.115, weight: .semibold))
+                .font(.system(size: side * 0.125, weight: .semibold))
                 .monospacedDigit()
                 .foregroundStyle(Theme.textPrimary)
                 .contentTransition(.numericText())
 
             Button(action: openAlarmOptions) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: side * 0.045, weight: .medium))
-                    .foregroundStyle(Theme.textPrimary)
-                    .padding(.horizontal, side * 0.06)
-                    .padding(.vertical, side * 0.026)
-                    .background(Theme.surface, in: Capsule())
-                    .overlay(Capsule().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
+                HStack(spacing: side * 0.018) {
+                    Image(systemName: "slider.horizontal.3")
+                    Text("Options")
+                }
+                .font(.system(size: side * 0.038, weight: .medium))
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, side * 0.05)
+                .padding(.vertical, side * 0.026)
+                .background(Theme.surface, in: Capsule())
+                .overlay(Capsule().strokeBorder(Theme.surfaceStroke, lineWidth: 1))
+                .shadow(color: Theme.cardShadow.opacity(0.05), radius: 8, y: 3)
             }
             .accessibilityLabel("Alarm options")
         }
@@ -155,16 +134,16 @@ struct SleepDialView: View {
         let handleSize = side * 0.105
 
         return ZStack {
-            // Bedtime (moon)
+            // Bedtime (moon) — white handle, orange glyph.
             ZStack {
-                Circle().fill(Color(hex: 0x2A1E44))
-                Circle().strokeBorder(Color.white.opacity(0.18), lineWidth: 1)
+                Circle().fill(Theme.surface)
+                Circle().strokeBorder(Theme.surfaceStroke, lineWidth: 1)
                 Image(systemName: "moon.fill")
-                    .font(.system(size: handleSize * 0.45))
-                    .foregroundStyle(Theme.accentBright)
+                    .font(.system(size: handleSize * 0.42))
+                    .foregroundStyle(Theme.accent)
             }
             .frame(width: handleSize, height: handleSize)
-            .shadow(color: Theme.accentDeep.opacity(0.8), radius: 8)
+            .shadow(color: Theme.cardShadow.opacity(0.15), radius: 6, y: 2)
             .position(point(at: settings.bedtimeMinutes, radius: ringRadius, center: center))
             .accessibilityElement()
             .accessibilityLabel("Bedtime")
@@ -174,15 +153,15 @@ struct SleepDialView: View {
                 adjustBed(by: direction == .increment ? 15 : -15)
             }
 
-            // Wake (alarm)
+            // Wake (alarm) — filled orange handle, white glyph.
             ZStack {
-                Circle().fill(Color(hex: 0xEDE7FF))
+                Circle().fill(Theme.accent)
                 Image(systemName: "alarm.fill")
-                    .font(.system(size: handleSize * 0.48))
-                    .foregroundStyle(Theme.accentDeep)
+                    .font(.system(size: handleSize * 0.46))
+                    .foregroundStyle(.white)
             }
             .frame(width: handleSize, height: handleSize)
-            .shadow(color: Theme.accent.opacity(0.9), radius: 10)
+            .shadow(color: Theme.accent.opacity(0.35), radius: 8, y: 2)
             .position(point(at: settings.wakeMinutes, radius: ringRadius, center: center))
             .accessibilityElement()
             .accessibilityLabel("Wake-up time")

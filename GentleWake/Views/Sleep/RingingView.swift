@@ -17,7 +17,7 @@ struct RingingView: View {
 
     var body: some View {
         ZStack {
-            StarfieldBackground()
+            AppBackground()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -57,18 +57,11 @@ struct RingingView: View {
                 } label: {
                     Text("I'm awake")
                         .font(.headline)
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 54)
                         .padding(.vertical, 17)
-                        .background(
-                            LinearGradient(
-                                colors: [Theme.accentDeep, Theme.accent],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            in: Capsule()
-                        )
-                        .shadow(color: Theme.accent.opacity(0.6), radius: 18)
+                        .background(Theme.accent, in: Capsule())
+                        .shadow(color: Theme.accent.opacity(0.35), radius: 16, y: 6)
                 }
                 .padding(.bottom, 40)
                 .accessibilityHint("Stops the alarm")
@@ -76,28 +69,30 @@ struct RingingView: View {
         }
     }
 
-    /// Glowing orb flanked by an animated sine waveform.
+    /// Clean sunrise motif: a soft accent ring with a filled orange disc that
+    /// gently breathes, over a thin animated waveform line.
     private var orbWithWaveform: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30)) { context in
             let t = context.date.timeIntervalSinceReferenceDate
             ZStack {
-                WaveformShape(phase: t * 2.2, amplitude: isNudging ? 16 : 9)
-                    .stroke(Theme.accent.opacity(0.7), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    .frame(height: 60)
-                    .padding(.horizontal, 30)
+                WaveformShape(phase: t * 2.2, amplitude: isNudging ? 14 : 8)
+                    .stroke(Theme.accent.opacity(0.5), style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .frame(height: 56)
+                    .padding(.horizontal, 40)
 
                 Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Theme.accentBright, Theme.accent, Theme.accentDeep],
-                            center: .init(x: 0.4, y: 0.35),
-                            startRadius: 6,
-                            endRadius: 90
-                        )
+                    .fill(Theme.accentSoft)
+                    .frame(width: 168, height: 168)
+                    .scaleEffect(1 + 0.03 * sin(t * (isNudging ? 6 : 2.5)))
+
+                Circle()
+                    .fill(Theme.accent)
+                    .frame(width: 108, height: 108)
+                    .overlay(
+                        Image(systemName: isNudging ? "bell.fill" : "sun.max.fill")
+                            .font(.system(size: 44, weight: .medium))
+                            .foregroundStyle(.white)
                     )
-                    .frame(width: 130, height: 130)
-                    .shadow(color: Theme.accent.opacity(0.9), radius: 34)
-                    .scaleEffect(1 + 0.04 * sin(t * (isNudging ? 6 : 2.5)))
             }
         }
         .accessibilityHidden(true)

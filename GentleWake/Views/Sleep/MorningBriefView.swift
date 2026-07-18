@@ -10,7 +10,7 @@ struct MorningBriefView: View {
 
     var body: some View {
         ZStack {
-            StarfieldBackground()
+            AppBackground()
 
             VStack(spacing: 0) {
                 Spacer()
@@ -61,18 +61,11 @@ struct MorningBriefView: View {
                 } label: {
                     Text("Start the day")
                         .font(.headline)
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(.white)
                         .padding(.horizontal, 54)
                         .padding(.vertical, 17)
-                        .background(
-                            LinearGradient(
-                                colors: [Theme.accentDeep, Theme.accent],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
-                            in: Capsule()
-                        )
-                        .shadow(color: Theme.accent.opacity(0.6), radius: 18)
+                        .background(Theme.accent, in: Capsule())
+                        .shadow(color: Theme.accent.opacity(0.35), radius: 16, y: 6)
                 }
                 .padding(.bottom, 40)
                 .accessibilityHint("Closes the morning brief")
@@ -83,19 +76,11 @@ struct MorningBriefView: View {
     private var sun: some View {
         ZStack {
             Circle()
-                .fill(Theme.warning.opacity(0.25))
-                .frame(width: 140, height: 140)
-                .blur(radius: 30)
+                .fill(Theme.accentSoft)
+                .frame(width: 132, height: 132)
             Image(systemName: "sun.horizon.fill")
-                .font(.system(size: 66))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(hex: 0xFFD9A0), Theme.warning],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .shadow(color: Theme.warning.opacity(0.7), radius: 22)
+                .font(.system(size: 56))
+                .foregroundStyle(Theme.accent)
         }
         .accessibilityHidden(true)
     }

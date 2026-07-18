@@ -46,7 +46,6 @@ struct NextSleepView: View {
             closeButton
         }
         .background(Theme.sheetBackground.ignoresSafeArea())
-        .preferredColorScheme(.dark)
         .task {
             if HealthStore.shared.isConnected {
                 healthNights = await HealthStore.shared.recentNights()
@@ -297,7 +296,7 @@ struct NextSleepView: View {
             }
             .chartYAxis {
                 AxisMarks(values: [0, 4, 8]) {
-                    AxisGridLine().foregroundStyle(Color.white.opacity(0.08))
+                    AxisGridLine().foregroundStyle(Theme.surfaceStroke)
                     AxisValueLabel().foregroundStyle(Theme.textSecondary)
                 }
             }

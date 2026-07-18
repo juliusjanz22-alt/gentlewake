@@ -11,7 +11,6 @@ struct GentleWakeApp: App {
             HomeView()
                 .environment(coordinator)
                 .environment(homeStore)
-                .preferredColorScheme(.dark)
                 .tint(Theme.accentBright)
         }
         .modelContainer(for: [AlarmSettings.self, SleepSession.self])
