@@ -36,6 +36,10 @@ final class ScreenshotTests: XCTestCase {
         let app = launchApp()
         waitForHome(app)
         app.buttons["Alarm"].tap()
+        // Let the toggle settle so the screenshot shows the on state, not a
+        // mid-tap frame.
+        _ = app.buttons["Alarm"].waitForExistence(timeout: 2)
+        sleepBriefly()
         snap(app, "02-home-alarm-on")
         app.buttons["Alarm"].tap()
     }
