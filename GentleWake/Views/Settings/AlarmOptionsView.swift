@@ -45,7 +45,20 @@ struct AlarmOptionsView: View {
 struct AlarmOptionsContent: View {
     @Bindable var settings: AlarmSettings
 
-    private static let fadeDurations = [5, 10, 15, 20, 30]
+    /// Bridges the Int minutes model to the Slider's Double value, ticking a
+    /// haptic on each whole-minute step for a ratchet-like feel.
+    private var fadeMinutesBinding: Binding<Double> {
+        Binding(
+            get: { Double(settings.fadeInMinutes) },
+            set: { newValue in
+                let minutes = Int(newValue.rounded())
+                if minutes != settings.fadeInMinutes {
+                    settings.fadeInMinutes = minutes
+                    Haptics.tick()
+                }
+            }
+        )
+    }
 
     var body: some View {
         ScrollView {
@@ -128,17 +141,31 @@ struct AlarmOptionsContent: View {
                 .font(.footnote)
                 .foregroundStyle(Theme.textSecondary)
 
-            HStack(spacing: 8) {
-                ForEach(Self.fadeDurations, id: \.self) { minutes in
-                    selectablePill(
-                        label: "\(minutes) min",
-                        isSelected: settings.fadeInMinutes == minutes
-                    ) {
-                        settings.fadeInMinutes = minutes
-                        Haptics.tick()
-                    }
-                }
+            HStack {
+                Text("Duration")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(Theme.textSecondary)
+                Spacer()
+                Text("\(settings.fadeInMinutes) min")
+                    .font(.title3.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(Theme.accent)
+                    .contentTransition(.numericText())
             }
+            .padding(.top, 2)
+
+            Slider(value: fadeMinutesBinding, in: 1...30, step: 1)
+                .tint(Theme.accent)
+                .accessibilityLabel("Fade-in duration")
+                .accessibilityValue("\(settings.fadeInMinutes) minutes")
+
+            HStack {
+                Text("1 min")
+                Spacer()
+                Text("30 min")
+            }
+            .font(.caption2)
+            .foregroundStyle(Theme.textSecondary)
 
             Text("Rise curve")
                 .font(.footnote.weight(.semibold))
@@ -276,25 +303,6 @@ struct AlarmOptionsContent: View {
         }
     }
 
-    private func selectablePill(label: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(label)
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(isSelected ? Theme.textPrimary : Theme.textSecondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 9)
-                .frame(maxWidth: .infinity)
-                .background(
-                    isSelected ? Theme.accentSoft : Theme.track.opacity(0.5),
-                    in: Capsule()
-                )
-                .overlay(
-                    Capsule().strokeBorder(isSelected ? Theme.accent : Theme.surfaceStroke, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-    }
 }
 
 /// Mini preview of a fade curve for the selector pills.
