@@ -104,13 +104,16 @@ struct FAQView: View {
                 Text("Send feedback")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(Theme.textPrimary)
+                Spacer()
+                LockBadge()
             }
-            Text("Feedback address gets wired up with final branding.")
+            Text("Sending feedback in-app is coming soon.")
                 .font(.footnote)
                 .foregroundStyle(Theme.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .background(Theme.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .opacity(0.7)
     }
 }

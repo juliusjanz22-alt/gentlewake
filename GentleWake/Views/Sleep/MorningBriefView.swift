@@ -29,25 +29,13 @@ struct MorningBriefView: View {
 
                 VStack(spacing: 12) {
                     if settings.briefWeather {
-                        panel(
-                            icon: "cloud.sun.fill",
-                            title: "Weather",
-                            detail: "Connects in the integrations phase"
-                        )
+                        panel(icon: "cloud.sun.fill", title: "Weather")
                     }
                     if settings.briefCalendar {
-                        panel(
-                            icon: "calendar",
-                            title: "Today's events",
-                            detail: "Connects in the integrations phase"
-                        )
+                        panel(icon: "calendar", title: "Today's events")
                     }
                     if settings.briefReminders {
-                        panel(
-                            icon: "checklist",
-                            title: "Reminders",
-                            detail: "Connects in the integrations phase"
-                        )
+                        panel(icon: "checklist", title: "Reminders")
                     }
                 }
                 .padding(.horizontal, 24)
@@ -85,21 +73,17 @@ struct MorningBriefView: View {
         .accessibilityHidden(true)
     }
 
-    private func panel(icon: String, title: String, detail: String) -> some View {
+    private func panel(icon: String, title: String) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.body)
                 .foregroundStyle(Theme.accentBright)
                 .frame(width: 30)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                Text(detail)
-                    .font(.caption)
-                    .foregroundStyle(Theme.textSecondary)
-            }
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.textPrimary)
             Spacer()
+            LockBadge()
         }
         .padding(14)
         .background(Theme.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -107,6 +91,8 @@ struct MorningBriefView: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(Theme.surfaceStroke, lineWidth: 1)
         )
+        .opacity(0.7)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). Locked, coming soon")
     }
 }

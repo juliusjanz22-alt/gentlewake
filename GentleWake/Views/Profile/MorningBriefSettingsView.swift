@@ -15,6 +15,8 @@ struct MorningBriefSettingsView: View {
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
+                lockedDataBanner
+
                 toggleCard(
                     icon: "calendar",
                     title: "Calendar",
@@ -34,10 +36,6 @@ struct MorningBriefSettingsView: View {
                     isOn: $settings.briefReminders
                 )
 
-                Text("Live calendar, weather and reminders data connects in the integrations phase.")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.warning)
-                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 18)
             .padding(.top, 14)
@@ -46,6 +44,23 @@ struct MorningBriefSettingsView: View {
         .background(Theme.sheetBackground)
         .navigationTitle("Morning brief")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// You can pick panels now, but the live data behind them isn't built —
+    /// call that out clearly rather than letting it look finished.
+    private var lockedDataBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "lock.fill")
+                .font(.footnote)
+                .foregroundStyle(Theme.textSecondary)
+            Text("Live weather, calendar and reminders data is coming soon. You can choose the panels now.")
+                .font(.caption)
+                .foregroundStyle(Theme.textSecondary)
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(Theme.track.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 
     private func toggleCard(icon: String, title: String, subtitle: String, isOn: Binding<Bool>) -> some View {

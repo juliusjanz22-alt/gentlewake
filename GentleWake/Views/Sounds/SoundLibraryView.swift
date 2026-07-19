@@ -94,36 +94,26 @@ struct SoundLibraryView: View {
     // MARK: - Import footer
 
     private var importFooter: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: "square.and.arrow.down")
-                    .foregroundStyle(Theme.textSecondary)
-                Text("Import your own audio")
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Text("Later phase")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Theme.surface, in: Capsule())
-            }
-            HStack(spacing: 10) {
-                Image(systemName: "music.note.list")
-                    .foregroundStyle(Theme.textSecondary)
-                Text("Sync from Apple Music")
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Text("Later phase")
-                    .font(.caption2.weight(.semibold))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Theme.surface, in: Capsule())
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            importRow(icon: "square.and.arrow.down", title: "Import your own audio")
+            importRow(icon: "music.note.list", title: "Sync from Apple Music")
         }
         .font(.subheadline)
         .padding(16)
         .background(Theme.surface.opacity(0.5), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+
+    private func importRow(icon: String, title: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(Theme.textSecondary)
+            Text(title)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            LockBadge()
+        }
+        .opacity(0.6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title). Locked, coming soon")
     }
 }
