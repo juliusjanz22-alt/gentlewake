@@ -5,16 +5,14 @@ import SwiftData
 /// "Your next sleep" sheet: sleep gate recommendation, planned sleep +
 /// optimal alarm cards, tracking status, and the 7-night trend chart.
 ///
-/// The sleep-gate value is a local 90-minute-cycle heuristic (INFERRED —
-/// the source app derives it from Health/motion analysis, which lands in
-/// the integrations phase; the reference explicitly shows a "Sample data"
-/// state before data is connected, which this matches).
+/// The sleep-gate value is a local 90-minute-cycle heuristic, and tracking
+/// is entirely on-device from the nights you record — no Health or account.
+/// (The chart shows sample data until you've recorded a few nights, matching
+/// the reference's pre-data state.)
 struct NextSleepView: View {
     @Bindable var settings: AlarmSettings
     @Query(sort: \SleepSession.date, order: .reverse) private var sessions: [SleepSession]
     @Environment(\.dismiss) private var dismiss
-    @State private var healthUnavailable = false
-    @State private var healthNights: [(date: Date, minutes: Int)] = []
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -25,7 +23,6 @@ struct NextSleepView: View {
                         .foregroundStyle(Theme.textPrimary)
                         .accessibilityAddTraits(.isHeader)
 
-                    discoverCard
                     sleepGateCard
                     HStack(spacing: 14) {
                         plannedSleepCard
@@ -35,7 +32,7 @@ struct NextSleepView: View {
                     if let streak = consistencyStreak {
                         consistencyPill(streak)
                     }
-                    connectDataCard
+                    trackingInfoCard
                     trendCard
                 }
                 .padding(.horizontal, 18)
@@ -46,11 +43,6 @@ struct NextSleepView: View {
             closeButton
         }
         .background(Theme.sheetBackground.ignoresSafeArea())
-        .task {
-            if HealthStore.shared.isConnected {
-                healthNights = await HealthStore.shared.recentNights()
-            }
-        }
     }
 
     // MARK: - Derived values
@@ -84,30 +76,6 @@ struct NextSleepView: View {
     }
 
     // MARK: - Cards
-
-    private var discoverCard: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "sparkles")
-                    .foregroundStyle(Theme.accentBright)
-                Text("Discover your sleep gate")
-                    .font(.headline)
-                    .foregroundStyle(Theme.textPrimary)
-            }
-            Text("Enable Apple Health and motion data to discover when your body is naturally primed for sleep every night.")
-                .font(.footnote)
-                .foregroundStyle(Theme.textSecondary)
-
-            enableDataButton
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Theme.surfaceStroke, lineWidth: 1)
-        )
-    }
 
     private var sleepGateCard: some View {
         VStack(spacing: 10) {
@@ -243,24 +211,22 @@ struct NextSleepView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var connectDataCard: some View {
+    private var trackingInfoCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Connect your data")
+                Text("On-device tracking")
                     .font(.headline)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
-                Text("\(min(max(sessions.count, healthNights.count), 5))/5 nights analyzed")
+                Text("\(min(sessions.count, 7)) nights recorded")
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
                     .foregroundStyle(Theme.textSecondary)
                     .glassPill(horizontalPadding: 10, verticalPadding: 5)
             }
-            Text("Enable Motion data to see your recent sleep trend here. Apple Health can make it even richer with wearable sleep samples.")
+            Text("Your sleep trend builds from the nights you record — every time your alarm wakes you. It all stays on your device: no account, no Health, no tracking.")
                 .font(.footnote)
                 .foregroundStyle(Theme.textSecondary)
-
-            enableDataButton
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -332,20 +298,15 @@ struct NextSleepView: View {
     }
 
     private var hasRealData: Bool {
-        !sessions.isEmpty || !healthNights.isEmpty
+        !sessions.isEmpty
     }
 
     private var trendData: [(label: String, hours: Double)] {
         let formatter = DateFormatter()
         formatter.dateFormat = "EEE"
 
-        // Health samples win (richer source); recorded sessions next;
-        // deterministic sample data mirrors the reference's pre-data state.
-        if !healthNights.isEmpty {
-            return healthNights.prefix(7).reversed().map {
-                (formatter.string(from: $0.date), Double($0.minutes) / 60)
-            }
-        }
+        // Recorded nights, else deterministic sample data mirroring the
+        // reference's pre-data state.
         if !sessions.isEmpty {
             return sessions.prefix(7).reversed().map {
                 (formatter.string(from: $0.date), Double($0.durationMinutes) / 60)
@@ -376,36 +337,6 @@ struct NextSleepView: View {
         case .good: Theme.success
         case .poor: Theme.warning
         case .critical: Color(hex: 0xF06060)
-        }
-    }
-
-    private var enableDataButton: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Button {
-                Task {
-                    guard HealthStore.shared.isAvailable else {
-                        healthUnavailable = true
-                        return
-                    }
-                    await HealthStore.shared.requestAuthorization()
-                    healthNights = await HealthStore.shared.recentNights()
-                }
-            } label: {
-                Text(HealthStore.shared.isConnected ? "Refresh data" : "Enable data")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Theme.textPrimary)
-                    .padding(.horizontal, 22)
-                    .padding(.vertical, 10)
-                    .background(Theme.accent.opacity(0.35), in: Capsule())
-                    .overlay(Capsule().strokeBorder(Theme.accent, lineWidth: 1))
-            }
-            .accessibilityHint("Connects Apple Health sleep data")
-
-            if healthUnavailable {
-                Text("Apple Health isn't connected in this build.")
-                    .font(.caption2)
-                    .foregroundStyle(Theme.warning)
-            }
         }
     }
 

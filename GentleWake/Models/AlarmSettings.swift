@@ -26,10 +26,6 @@ final class AlarmSettings {
     var briefWeather: Bool = true
     var briefReminders: Bool = true
 
-    // Smart light sunrise (Phase 6). Accessory IDs comma-joined.
-    var sunriseEnabled: Bool = false
-    var sunriseAccessoryIDs: String = ""
-
     init(
         bedtimeMinutes: Int = 23 * 60,
         wakeMinutes: Int = 7 * 60,

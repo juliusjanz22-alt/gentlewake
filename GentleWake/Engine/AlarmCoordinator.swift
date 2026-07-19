@@ -89,10 +89,6 @@ final class AlarmCoordinator {
     /// the host inserts a SleepSession so tracking works offline.
     var recordSession: ((AlarmSettings, Date) -> Void)?
 
-    /// Called with fade progress (0–1) each tick while fading; the host
-    /// drives the HomeKit sunrise from it when enabled.
-    var sunriseUpdate: ((Double) -> Void)?
-
     /// User confirmed they're awake on the ringing screen. Hands off to the
     /// morning brief if any of its panels are enabled.
     func dismissAlarm() {
@@ -187,9 +183,6 @@ final class AlarmCoordinator {
             let level = settings.startVolume
                 + (settings.endVolume - settings.startVolume) * curve.volume(at: fadeProgress)
             synth.volume = Float(level)
-            if settings.sunriseEnabled {
-                sunriseUpdate?(fadeProgress)
-            }
         }
 
         setPhase(target, settings: settings)

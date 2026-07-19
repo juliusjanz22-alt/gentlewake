@@ -83,26 +83,6 @@ final class ScreenshotTests: XCTestCase {
         app.buttons["Why wake up gradually?"].firstMatch.tap()
         sleepBriefly()
         snap(app, "18-faq")
-        app.navigationBars.buttons.firstMatch.tap()
-        sleepBriefly()
-
-        app.buttons["Smart light sunrise"].firstMatch.tap()
-        sleepBriefly()
-        snap(app, "19-sunrise-settings")
-
-        // Enabling triggers the HomeKit permission prompt in a fresh sim;
-        // grant it if it appears, then capture the no-lights empty state.
-        app.switches.firstMatch.tap()
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        for label in ["OK", "Allow"] {
-            let button = springboard.buttons[label]
-            if button.waitForExistence(timeout: 4) {
-                button.tap()
-                break
-            }
-        }
-        sleepBriefly()
-        snap(app, "20-sunrise-empty-state")
     }
 
     @MainActor
@@ -258,51 +238,6 @@ final class ScreenshotTests: XCTestCase {
         shot.name = "16-backup-notification-banner"
         shot.lifetime = .keepAlways
         add(shot)
-    }
-
-    /// HealthKit round trip: grant access, seed 5 sample nights into the
-    /// simulator's Health store, and verify the app reads them back into
-    /// the trend UI.
-    @MainActor
-    func testZZZHealthDataRoundTrip() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-UITestScenario", "healthSeed", "-UITestSkipNotifAuth", "YES"]
-        app.launch()
-
-        // Drive the Health Access sheet if it appears.
-        if app.staticTexts["Health Access"].waitForExistence(timeout: 12) {
-            let turnOnAll = app.staticTexts["Turn On All"]
-            if turnOnAll.waitForExistence(timeout: 4) {
-                turnOnAll.tap()
-            }
-            let allow = app.buttons["Allow"]
-            if allow.waitForExistence(timeout: 4) {
-                allow.tap()
-            } else {
-                throw XCTSkip("Health Access sheet not automatable on this runtime")
-            }
-        } else {
-            throw XCTSkip("Health Access sheet never appeared; cannot grant access")
-        }
-
-        // Seeding runs right after authorization resolves.
-        Thread.sleep(forTimeInterval: 3)
-
-        waitForHome(app)
-        let pill = app.buttons.matching(
-            NSPredicate(format: "label BEGINSWITH 'Sleep duration'")
-        ).firstMatch
-        XCTAssertTrue(pill.waitForExistence(timeout: 5))
-        pill.tap()
-
-        let analyzed = app.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS '5/5'")
-        ).firstMatch
-        XCTAssertTrue(
-            analyzed.waitForExistence(timeout: 15),
-            "Seeded Health nights never appeared in the analysis UI"
-        )
-        snap(app, "21-next-sleep-health-data")
     }
 
     // MARK: - Helpers
