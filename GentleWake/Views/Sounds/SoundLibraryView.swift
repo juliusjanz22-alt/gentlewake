@@ -2,10 +2,11 @@ import SwiftUI
 import SwiftData
 
 /// The sound picker: random-mode toggle on top, then a two-column card grid
-/// per category (matching the reference's library screen). Tap previews are
-/// wired in Phase 3 when the audio engine lands.
+/// per category (matching the reference's library screen). Tapping a card
+/// previews the sound and selects it.
 struct SoundLibraryView: View {
     @Bindable var settings: AlarmSettings
+    @State private var preview = SoundPreviewPlayer()
 
     private let columns = [
         GridItem(.flexible(), spacing: 14),
@@ -30,6 +31,7 @@ struct SoundLibraryView: View {
         .navigationTitle("Alarm sound")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.sheetBackground, for: .navigationBar)
+        .onDisappear { preview.stop() }
     }
 
     // MARK: - Random mode
@@ -82,8 +84,13 @@ struct SoundLibraryView: View {
 
             LazyVGrid(columns: columns, spacing: 14) {
                 ForEach(SoundCatalog.sounds(in: category)) { sound in
-                    SoundCardView(sound: sound, isSelected: settings.soundID == sound.id) {
+                    SoundCardView(
+                        sound: sound,
+                        isSelected: settings.soundID == sound.id,
+                        isPlaying: preview.playingID == sound.id
+                    ) {
                         settings.soundID = sound.id
+                        preview.play(sound.id)
                         Haptics.tick()
                     }
                 }

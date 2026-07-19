@@ -33,6 +33,7 @@ struct SoundArtworkView: View {
 struct SoundCardView: View {
     let sound: AlarmSound
     let isSelected: Bool
+    var isPlaying: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -49,6 +50,17 @@ struct SoundCardView: View {
                         .background(Theme.surface.opacity(0.9), in: Capsule())
                         .padding(.bottom, 10)
                         .padding(.horizontal, 6)
+                }
+                .overlay(alignment: .topLeading) {
+                    if isPlaying {
+                        Image(systemName: "speaker.wave.2.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .padding(7)
+                            .background(Theme.accent, in: Circle())
+                            .padding(8)
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
                 .overlay(alignment: .topTrailing) {
                     if isSelected {
@@ -68,8 +80,9 @@ struct SoundCardView: View {
                 )
         }
         .buttonStyle(.plain)
+        .animation(.snappy, value: isPlaying)
         .accessibilityLabel(sound.name)
         .accessibilityValue(isSelected ? "Selected" : "")
-        .accessibilityHint("Sets this as your alarm sound")
+        .accessibilityHint("Plays a preview and sets this as your alarm sound")
     }
 }
