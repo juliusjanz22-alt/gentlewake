@@ -53,32 +53,38 @@ struct HomeView: View {
             get: { coordinator.showsSleepUI },
             set: { _ in }
         )) {
-            if let settings = storedSettings.first {
-                switch coordinator.phase {
-                case .ringing, .nudging:
-                    RingingView(settings: settings)
-                case .brief:
-                    MorningBriefView(settings: settings)
-                default:
-                    SleepModeView(settings: settings)
+            Group {
+                if let settings = storedSettings.first {
+                    switch coordinator.phase {
+                    case .ringing, .nudging:
+                        RingingView(settings: settings)
+                    case .brief:
+                        MorningBriefView(settings: settings)
+                    default:
+                        SleepModeView(settings: settings)
+                    }
                 }
             }
+            .appAppearance()
         }
         .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .profile:
-                if let settings = storedSettings.first {
-                    ProfileView(settings: settings)
-                }
-            case .nextSleep:
-                if let settings = storedSettings.first {
-                    NextSleepView(settings: settings)
-                }
-            case .alarmOptions:
-                if let settings = storedSettings.first {
-                    AlarmOptionsView(settings: settings)
+            Group {
+                switch sheet {
+                case .profile:
+                    if let settings = storedSettings.first {
+                        ProfileView(settings: settings)
+                    }
+                case .nextSleep:
+                    if let settings = storedSettings.first {
+                        NextSleepView(settings: settings)
+                    }
+                case .alarmOptions:
+                    if let settings = storedSettings.first {
+                        AlarmOptionsView(settings: settings)
+                    }
                 }
             }
+            .appAppearance()
         }
     }
 

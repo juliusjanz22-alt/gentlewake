@@ -30,3 +30,21 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     /// Light is the redesign's delivered identity, so it's the default.
     static let defaultRaw = AppearanceMode.light.rawValue
 }
+
+/// Applies the stored appearance preference. Must be attached to every
+/// independently-presented surface (sheets, full-screen covers) — SwiftUI
+/// does NOT propagate the root's preferredColorScheme into those contexts,
+/// so without this a sheet stays in its old scheme when the toggle flips.
+private struct AppAppearanceModifier: ViewModifier {
+    @AppStorage(AppearanceMode.storageKey) private var appearanceRaw = AppearanceMode.defaultRaw
+
+    func body(content: Content) -> some View {
+        content.preferredColorScheme(AppearanceMode(rawValue: appearanceRaw)?.colorScheme)
+    }
+}
+
+extension View {
+    func appAppearance() -> some View {
+        modifier(AppAppearanceModifier())
+    }
+}
